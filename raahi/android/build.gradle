@@ -1,0 +1,16 @@
+// Top-level build file — kept minimal for new Flutter Gradle format
+allprojects {
+    repositories {
+        google()
+        mavenCentral()
+    }
+}
+
+rootProject.buildDir = "../build"
+subprojects {
+    project.buildDir = "${rootProject.buildDir}/${project.name}"
+}
+
+task clean(type: Delete) {
+    delete rootProject.buildDir
+}

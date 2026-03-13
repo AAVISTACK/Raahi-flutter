@@ -1,11 +1,7 @@
-// android/app/build.gradle
-
 plugins {
     id "com.android.application"
     id "kotlin-android"
     id "dev.flutter.flutter-gradle-plugin"
-
-    // ✅ Firebase ke liye zaroori - google-services.json use karta hai
     id "com.google.gms.google-services"
 }
 
@@ -28,14 +24,11 @@ android {
     }
 
     defaultConfig {
-        // ✅ Package name - Firebase mein bhi yahi dalna hai
         applicationId "com.raahi.app"
-        minSdkVersion 21          // Android 5.0+ (covers 99% devices)
+        minSdkVersion 21
         targetSdkVersion flutter.targetSdkVersion
         versionCode flutter.versionCode
         versionName flutter.versionName
-
-        // Multidex for large apps
         multiDexEnabled true
     }
 
@@ -46,7 +39,6 @@ android {
             shrinkResources false
         }
         debug {
-            applicationIdSuffix ".debug"
             debuggable true
         }
     }
@@ -57,10 +49,8 @@ flutter {
 }
 
 dependencies {
-    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
+    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:1.9.0"
     implementation "androidx.multidex:multidex:2.0.1"
-
-    // Firebase BOM - sab Firebase libraries ka version manage karta hai
     implementation platform("com.google.firebase:firebase-bom:32.7.0")
     implementation "com.google.firebase:firebase-analytics"
     implementation "com.google.firebase:firebase-messaging"

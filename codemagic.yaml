@@ -6,20 +6,23 @@ workflows:
       flutter: 3.19.0
       java: 17
     scripts:
-      - name: Get Flutter packages
+      - name: Check folder structure
         script: |
-          cd raahi
+          echo "Root files:"
+          ls -la
+          echo "---"
+          if [ -d "raahi" ]; then
+            echo "raahi/ folder found"
+            cd raahi
+          else
+            echo "No raahi/ folder - using root"
+          fi
           flutter pub get
       - name: Build debug APK
         script: |
-          cd raahi
+          if [ -d "raahi" ]; then
+            cd raahi
+          fi
           flutter build apk --debug
     artifacts:
-      - raahi/build/app/outputs/flutter-apk/app-debug.apk
-    publishing:
-      email:
-        recipients:
-          - build@raahi.app
-        notify:
-          success: true
-          failure: true
+      - "**/flutter-apk/app-debug.apk"
