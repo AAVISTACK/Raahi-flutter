@@ -41,13 +41,13 @@
         <!-- Google Maps -->
         <meta-data
             android:name="com.google.android.geo.API_KEY"
-            android:value="YOUR_GOOGLE_MAPS_API_KEY"/>
+            android:value="AIzaSyDfgZcLIF8SGaBBZs0JLX1FwlGl1R914w4"/>
 
         <!-- AdMob App ID — REPLACE with your real ID from AdMob dashboard -->
         <!-- admob.google.com → Apps → App Settings → App ID -->
         <meta-data
             android:name="com.google.android.gms.ads.APPLICATION_ID"
-            android:value="YOUR_ADMOB_APP_ID"/>
+            android:value="ca-app-pub-4009424857724121~5782436256"/>
 
         <!-- Firebase Messaging -->
         <service

@@ -6,23 +6,27 @@ workflows:
       flutter: 3.19.0
       java: 17
     scripts:
-      - name: Check folder structure
+      - name: Flutter pub get + Build APK
         script: |
-          echo "Root files:"
-          ls -la
-          echo "---"
+          # Find Flutter project root
           if [ -d "raahi" ]; then
-            echo "raahi/ folder found"
-            cd raahi
+            PROJECT_DIR="raahi"
           else
-            echo "No raahi/ folder - using root"
+            PROJECT_DIR="."
           fi
+          
+          echo "Building from: $PROJECT_DIR"
+          cd $PROJECT_DIR
+          
+          # Show structure
+          ls -la android/
+          
+          # Get packages
           flutter pub get
-      - name: Build debug APK
-        script: |
-          if [ -d "raahi" ]; then
-            cd raahi
-          fi
-          flutter build apk --debug
+          
+          # Build debug APK
+          flutter build apk --debug --no-tree-shake-icons
+          
     artifacts:
       - "**/flutter-apk/app-debug.apk"
+      - "**/outputs/**/*.apk"
