@@ -1,0 +1,25 @@
+workflows:
+  android-debug:
+    name: Raahi Android Debug APK
+    max_build_duration: 60
+    environment:
+      flutter: 3.19.0
+      java: 17
+    scripts:
+      - name: Get Flutter packages
+        script: |
+          cd raahi
+          flutter pub get
+      - name: Build debug APK
+        script: |
+          cd raahi
+          flutter build apk --debug
+    artifacts:
+      - raahi/build/app/outputs/flutter-apk/app-debug.apk
+    publishing:
+      email:
+        recipients:
+          - build@raahi.app
+        notify:
+          success: true
+          failure: true
