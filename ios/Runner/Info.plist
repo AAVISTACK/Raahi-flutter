@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN"
+  "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+
+  <!-- App Identity -->
+  <key>CFBundleName</key>
+  <string>Raahi</string>
+  <key>CFBundleDisplayName</key>
+  <string>Raahi</string>
+  <key>CFBundleIdentifier</key>
+  <string>com.raahi.app</string>
+  <key>CFBundleVersion</key>
+  <string>1</string>
+  <key>CFBundleShortVersionString</key>
+  <string>1.0.0</string>
+  <key>CFBundlePackageType</key>
+  <string>APPL</string>
+  <key>CFBundleExecutable</key>
+  <string>$(EXECUTABLE_NAME)</string>
+
+  <!-- Flutter -->
+  <key>NSPrincipalClass</key>
+  <string>NSApplication</string>
+  <key>UIMainStoryboardFile</key>
+  <string>Main</string>
+  <key>UILaunchStoryboardName</key>
+  <string>LaunchScreen</string>
+
+  <!-- ✅ LOCATION PERMISSIONS (GPS ke liye zaroori) -->
+  <key>NSLocationWhenInUseUsageDescription</key>
+  <string>Raahi ko aapki location chahiye taaki nearby drivers aur mechanics dhundh sake.</string>
+  <key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+  <string>Background mein location track karne ke liye taaki aap available driver ke roop mein dikhein.</string>
+  <key>NSLocationAlwaysUsageDescription</key>
+  <string>Highway par location hamesha active rehni chahiye emergency ke liye.</string>
+
+  <!-- ✅ MICROPHONE PERMISSION (Voice AI ke liye) -->
+  <key>NSMicrophoneUsageDescription</key>
+  <string>AI Mechanic se voice mein baat karne ke liye microphone chahiye.</string>
+  <key>NSSpeechRecognitionUsageDescription</key>
+  <string>Aapki awaaz ko text mein convert karne ke liye speech recognition use hoti hai.</string>
+
+  <!-- ✅ CAMERA PERMISSION (Vehicle photo ke liye) -->
+  <key>NSCameraUsageDescription</key>
+  <string>Gaadi ki photo lene ke liye camera access chahiye.</string>
+  <key>NSPhotoLibraryUsageDescription</key>
+  <string>Gaadi ki photo upload karne ke liye gallery access chahiye.</string>
+
+  <!-- Background Modes -->
+  <key>UIBackgroundModes</key>
+  <array>
+    <string>location</string>
+    <string>fetch</string>
+    <string>remote-notification</string>
+  </array>
+
+  <!-- App Transport Security -->
+  <key>NSAppTransportSecurity</key>
+  <dict>
+    <key>NSAllowsArbitraryLoads</key>
+    <true/>
+  </dict>
+
+  <!-- Supported orientations -->
+  <key>UISupportedInterfaceOrientations</key>
+  <array>
+    <string>UIInterfaceOrientationPortrait</string>
+  </array>
+
+</dict>
+</plist>

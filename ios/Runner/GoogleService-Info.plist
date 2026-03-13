@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN"
+  "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+
+<!--
+  ================================================================
+  ⚠️  YEH FILE SIRF PLACEHOLDER HAI
+  ================================================================
+
+  REAL FILE KAISE MILEGI:
+  1. https://console.firebase.google.com jaao
+  2. "Add project" → Project naam: Raahi
+  3. "Add app" → iOS icon click karo
+  4. iOS bundle ID daalo: com.raahi.app
+  5. "Register app" click karo
+  6. "GoogleService-Info.plist" DOWNLOAD karo
+  7. Is file ki jagah woh downloaded file PASTE karo
+     → ios/Runner/GoogleService-Info.plist
+
+  ================================================================
+  YAHAN PASTE KARNE KE BAAD YEH PLACEHOLDER DELETE KAR DENA
+  ================================================================
+-->
+
+<dict>
+  <key>CLIENT_ID</key>
+  <string>REPLACE_WITH_REAL_FILE_FROM_FIREBASE_CONSOLE</string>
+  <key>REVERSED_CLIENT_ID</key>
+  <string>REPLACE_WITH_REAL_FILE_FROM_FIREBASE_CONSOLE</string>
+  <key>API_KEY</key>
+  <string>REPLACE_WITH_REAL_FILE_FROM_FIREBASE_CONSOLE</string>
+  <key>GCM_SENDER_ID</key>
+  <string>REPLACE_WITH_REAL_FILE_FROM_FIREBASE_CONSOLE</string>
+  <key>BUNDLE_ID</key>
+  <string>com.raahi.app</string>
+  <key>PROJECT_ID</key>
+  <string>driver-sahayak</string>
+  <key>STORAGE_BUCKET</key>
+  <string>driver-sahayak.appspot.com</string>
+  <key>IS_ADS_ENABLED</key>
+  <false/>
+  <key>IS_ANALYTICS_ENABLED</key>
+  <false/>
+  <key>IS_APPINVITE_ENABLED</key>
+  <true/>
+  <key>IS_GCM_ENABLED</key>
+  <true/>
+  <key>IS_SIGNIN_ENABLED</key>
+  <true/>
+  <key>GOOGLE_APP_ID</key>
+  <string>REPLACE_WITH_REAL_FILE_FROM_FIREBASE_CONSOLE</string>
+</dict>
+</plist>

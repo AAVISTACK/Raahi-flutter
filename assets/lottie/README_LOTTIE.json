@@ -1,0 +1,24 @@
+{
+  "_INSTRUCTIONS": "Yahan se free Lottie animations download karo: https://lottiefiles.com",
+  "_RECOMMENDED": {
+    "loading": "https://lottiefiles.com/animations/loading-orange (search: loading)",
+    "sos_pulse": "https://lottiefiles.com/animations/pulse (search: pulse red)",
+    "success": "https://lottiefiles.com/animations/success-check",
+    "location_pin": "https://lottiefiles.com/animations/location"
+  },
+  "_HOW_TO_USE": [
+    "1. lottiefiles.com pe jaao",
+    "2. Animation dhundo aur download karo (.json format)",
+    "3. assets/lottie/ folder mein rakho",
+    "4. Flutter code mein use karo:",
+    "   Lottie.asset('assets/lottie/loading.json', width: 100, height: 100)"
+  ],
+  "v": "5.5.7",
+  "fr": 30,
+  "ip": 0,
+  "op": 60,
+  "w": 200,
+  "h": 200,
+  "nm": "placeholder",
+  "layers": []
+}
