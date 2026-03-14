@@ -5,22 +5,83 @@ workflows:
     environment:
       flutter: 3.19.0
       java: 17
+      # ── HOW TO SET UP FIXED SHA-1 (one-time only) ──────────────────────────
+      # 1. Run this build ONCE — it will generate a keystore and print:
+      #      KEYSTORE_BASE64 = <long base64 string>
+      #      SHA-1 = XX:XX:XX:XX:...
+      # 2. In Codemagic → Environment variables → Add:
+      #      Name:  KEYSTORE_BASE64
+      #      Value: <paste the base64 string from logs>
+      # 3. Add SHA-1 to Firebase Console → Project Settings →
+      #    Android App (com.raahi.app) → Add fingerprint → Save
+      # 4. Download new google-services.json from Firebase Console
+      # 5. From 2nd build onwards SHA-1 will NEVER change again.
+      # ───────────────────────────────────────────────────────────────────────
+
     scripts:
-      - name: Get SHA-1 fingerprint (copy from logs for Firebase Console)
+      - name: Setup fixed keystore (ensures SHA-1 never changes between builds)
         script: |
-          echo "========================================="
-          echo "DEBUG KEYSTORE SHA-1 FINGERPRINT:"
-          echo "========================================="
-          keytool -list -v \
-            -keystore ~/.android/debug.keystore \
-            -alias androiddebugkey \
-            -storepass android \
-            -keypass android 2>/dev/null | grep "SHA1:" || \
-          keytool -list -v \
-            -keystore ~/.android/debug.keystore \
-            -storepass android 2>/dev/null | grep "SHA1:" || \
-          echo "Debug keystore not found yet (will appear after first build)"
-          echo "========================================="
+          KEYSTORE_PATH="$HOME/raahi-fixed.keystore"
+
+          if [ -n "$KEYSTORE_BASE64" ]; then
+            # ── FIXED KEYSTORE EXISTS → decode and use it ──────────────────
+            echo "========================================="
+            echo "✅ Using FIXED keystore from env var"
+            echo "========================================="
+            echo "$KEYSTORE_BASE64" | base64 --decode > "$KEYSTORE_PATH"
+            keytool -list -v \
+              -keystore "$KEYSTORE_PATH" \
+              -alias raahi-debug \
+              -storepass raahi@debug2024 \
+              -keypass raahi@debug2024 2>/dev/null | grep -E "SHA1:|SHA256:"
+            echo "========================================="
+          else
+            # ── FIRST RUN → generate keystore, print base64 and SHA-1 ──────
+            echo "========================================="
+            echo "⚠️  FIRST TIME SETUP — Read instructions below!"
+            echo "========================================="
+            keytool -genkeypair \
+              -alias raahi-debug \
+              -keyalg RSA \
+              -keysize 2048 \
+              -validity 10000 \
+              -keystore "$KEYSTORE_PATH" \
+              -storepass raahi@debug2024 \
+              -keypass raahi@debug2024 \
+              -dname "CN=Raahi Debug, OU=Dev, O=Raahi, L=India, ST=India, C=IN" \
+              -noprompt 2>&1
+
+            echo ""
+            echo "========================================="
+            echo "📋 COPY THIS SHA-1 → ADD TO FIREBASE CONSOLE:"
+            echo "========================================="
+            keytool -list -v \
+              -keystore "$KEYSTORE_PATH" \
+              -alias raahi-debug \
+              -storepass raahi@debug2024 \
+              -keypass raahi@debug2024 2>/dev/null | grep -E "SHA1:|SHA256:"
+            echo "========================================="
+            echo ""
+            echo "========================================="
+            echo "📋 COPY THIS BASE64 → ADD AS CODEMAGIC ENV VAR:"
+            echo "   Variable name: KEYSTORE_BASE64"
+            echo "========================================="
+            base64 "$KEYSTORE_PATH"
+            echo ""
+            echo "========================================="
+            echo "NEXT STEPS:"
+            echo "1. Copy SHA-1 above → Firebase Console →"
+            echo "   raahi-d3564 → Project Settings →"
+            echo "   Android (com.raahi.app) → Add fingerprint"
+            echo "2. Download new google-services.json from Firebase"
+            echo "3. Copy KEYSTORE_BASE64 value above →"
+            echo "   Codemagic → Environment variables → Add"
+            echo "4. Trigger new build — SHA-1 will be fixed forever!"
+            echo "========================================="
+          fi
+
+          # Save keystore path for use in build step
+          echo "KEYSTORE_PATH=$KEYSTORE_PATH" >> $CM_ENV
 
       - name: Flutter pub get
         script: |
@@ -60,22 +121,18 @@ workflows:
             PROJECT_DIR="."
           fi
           cd $PROJECT_DIR
-          flutter build apk --debug --no-tree-shake-icons
 
-      - name: Print SHA-1 from built APK keystore
-        script: |
+          flutter build apk --debug --no-tree-shake-icons \
+            --dart-define=APP_ENV=debug
+
           echo "========================================="
-          echo "SHA-1 TO ADD IN FIREBASE CONSOLE:"
-          echo "========================================="
-          keytool -list -v \
-            -keystore ~/.android/debug.keystore \
-            -alias androiddebugkey \
-            -storepass android \
-            -keypass android 2>/dev/null | grep "SHA1:"
-          echo "========================================="
-          echo "Steps: Firebase Console → raahi-2269b →"
-          echo "Project Settings → Your Apps → Android →"
-          echo "Add fingerprint → paste SHA1 above → Save"
+          echo "✅ Build complete!"
+          if [ -n "$KEYSTORE_BASE64" ]; then
+            echo "✅ Fixed keystore used — SHA-1 is stable"
+          else
+            echo "⚠️  First-time build. Check logs above for SHA-1"
+            echo "⚠️  and KEYSTORE_BASE64 to set up fixed SHA-1."
+          fi
           echo "========================================="
 
     artifacts:
