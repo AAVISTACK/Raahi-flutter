@@ -3,8 +3,10 @@ class AppConstants {
   // ══════════════════════════════════════════════════════════
   // ✅ 1. BACKEND URL  →  Line 9 & 10
   // ══════════════════════════════════════════════════════════
-  static const String baseUrl = 'https://ada45316-64e9-49fa-b252-2f1d26ddb93f-00-2k2mwxfvfw7vq.worf.replit.dev/api/v1'; // ← LINE 9
-  static const String wsUrl   = 'wss://ada45316-64e9-49fa-b252-2f1d26ddb93f-00-2k2mwxfvfw7vq.worf.replit.dev';          // ← LINE 10
+  // FIX: Updated from dead worf.replit.dev dev URL to deployed production URL
+  // The backend Node.js API runs at /api/v1 on the deployed Replit app
+  static const String baseUrl = 'https://backend-deployer--enlighenavi.replit.app/api/v1'; // ← LINE 9
+  static const String wsUrl   = 'wss://backend-deployer--enlighenavi.replit.app';           // ← LINE 10
 
   // ══════════════════════════════════════════════════════════
   // ✅ 2. GOOGLE MAPS KEY  →  Line 17
