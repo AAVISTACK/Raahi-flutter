@@ -99,7 +99,7 @@ class AppTheme {
         ),
         iconTheme: IconThemeData(color: textSecondary, size: 22),
       ),
-      cardTheme: CardThemeData(
+      cardTheme: CardTheme(
         color: cardBg, elevation: 0,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(r14),
@@ -129,12 +129,12 @@ class AppTheme {
         labelStyle: const TextStyle(color: textSecondary, fontSize: 14),
       ),
       switchTheme: SwitchThemeData(
-        thumbColor: WidgetStateProperty.resolveWith((s) =>
-            s.contains(WidgetState.selected) ? Colors.white : textMuted),
-        trackColor: WidgetStateProperty.resolveWith((s) =>
-            s.contains(WidgetState.selected) ? primary : surfaceHigh),
-        trackOutlineColor: WidgetStateProperty.resolveWith((s) =>
-            s.contains(WidgetState.selected) ? primary : cardBorder),
+        thumbColor: MaterialStateProperty.resolveWith((s) =>
+            s.contains(MaterialState.selected) ? Colors.white : textMuted),
+        trackColor: MaterialStateProperty.resolveWith((s) =>
+            s.contains(MaterialState.selected) ? primary : surfaceHigh),
+        trackOutlineColor: MaterialStateProperty.resolveWith((s) =>
+            s.contains(MaterialState.selected) ? primary : cardBorder),
       ),
       bottomNavigationBarTheme: const BottomNavigationBarThemeData(
         backgroundColor: navyLight, selectedItemColor: primary,
