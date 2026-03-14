@@ -193,8 +193,6 @@ class _ShopScreenState extends State<ShopScreen> {
         _buildCategoryChips(),
         Expanded(child: _loading ? _buildShimmer() : _buildProductGrid()),
       ]),
-      // Floating "Buy on Amazon" button — shows when cart has items
-        ]),
       ),
       floatingActionButton: _cart.count > 0
           ? _buildBuyButton()
