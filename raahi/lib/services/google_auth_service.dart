@@ -29,8 +29,7 @@ class GoogleAuthService {
 
   final _googleSignIn = GoogleSignIn(
     scopes: ['email', 'profile'],
-    // serverClientId optional — only needed if you want server-side verification
-    // serverClientId: 'YOUR_WEB_CLIENT_ID.apps.googleusercontent.com',
+    serverClientId: '208965739273-0m50fpgsronmjc78ngck7a8fu8koa551.apps.googleusercontent.com',
   );
   final _firebaseAuth = FirebaseAuth.instance;
 
