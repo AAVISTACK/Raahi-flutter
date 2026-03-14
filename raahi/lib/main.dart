@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'services/api_service.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'services/ad_service.dart';
 import 'package:flutter/services.dart';
@@ -36,6 +38,9 @@ import 'screens/shop/shop_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp();
+  ApiService().init();
+  await ApiService().loadToken();
   await LanguageService().loadSavedLanguage();
   await AdService.initialize(); // AdMob init
   AdService().loadInterstitial(); // preload
