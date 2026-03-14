@@ -29,7 +29,12 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "208965739273-0m50fpgsronmjc78ngck7a8fu8koa551.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
         }
       }
     }
