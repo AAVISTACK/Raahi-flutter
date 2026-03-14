@@ -12,7 +12,20 @@
           "package_name": "com.raahi.app"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "313987257887-9fipac7coobab8jcpjkfcmurt28f3hgt.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.raahi.app",
+            "certificate_hash": "705cb9af4e766a4564aed95866e24e239a9fad02"
+          }
+        },
+        {
+          "client_id": "313987257887-of94j4jn4rbm5puvocrc6ulctpqmve8l.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyDfgZcLIF8SGaBBZs0JLX1FwlGl1R914w4"
@@ -20,7 +33,12 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "313987257887-of94j4jn4rbm5puvocrc6ulctpqmve8l.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
         }
       }
     }
