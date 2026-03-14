@@ -107,6 +107,7 @@ class _HighwayAlertsScreenState extends State<HighwayAlertsScreen>
                   ),
                 )).toList(),
             ),
+            ),
             const SizedBox(height: 12),
             _field(titleCtrl, 'Title (jaise: NH-44 pe jam)', maxLines: 1),
             const SizedBox(height: 8),

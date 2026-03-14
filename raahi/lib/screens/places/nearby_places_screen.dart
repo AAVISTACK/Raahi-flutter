@@ -120,6 +120,7 @@ class _NearbyPlacesScreenState extends State<NearbyPlacesScreen> {
               )).toList(),
           ),
         ),
+        ),
 
         // Places list
         Expanded(

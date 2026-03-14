@@ -6,6 +6,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../theme/app_theme.dart';
+import '../../models/models.dart';
 import '../../services/language_service.dart';
 import '../../widgets/ad_banner_widget.dart';
 import '../../widgets/ui_components.dart';
