@@ -34,7 +34,7 @@ import 'package:google_sign_in/google_sign_in.dart';
 import 'api_service.dart';
 
 // Web OAuth 2.0 Client ID from google-services.json (client_type: 3)
-const String _webClientId = '208965739273-0m50fpgsronmjc78ngck7a8fu8koa551.apps.googleusercontent.com';
+const String _webClientId = '313987257887-of94j4jn4rbm5puvocrc6ulctpqmve8l.apps.googleusercontent.com';
 
 class GoogleAuthService {
   // ── Singleton ──────────────────────────────────────────
