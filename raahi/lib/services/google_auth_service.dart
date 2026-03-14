@@ -1,5 +1,5 @@
 // ============================================================
-// FILE 1: lib/services/google_auth_service.dart  (NEW)
+// lib/services/google_auth_service.dart
 // ============================================================
 // Handles: Google Sign-In → Firebase Auth → Backend JWT token
 //
@@ -15,11 +15,29 @@
 //   Backend ko Firebase token bhejte hain → JWT milta hai
 //       ↓
 //   ApiService mein JWT save → HomeScreen
+//
+// FIX: Removed incorrect serverClientId — was using Android OAuth client ID
+//      (client_type: 1) which caused Google Sign-In to fail silently.
+//      serverClientId must be the WEB OAuth client ID (client_type: 3).
+//      To get the web client ID:
+//        1. Firebase Console → Project Settings → General
+//        2. Scroll to "Your apps" → Web app (add one if missing)
+//        3. Or: console.cloud.google.com → APIs → Credentials →
+//           Look for "Web client (auto created by Google Service)" OAuth 2.0 ID
+//        4. Set WEB_CLIENT_ID below.
+//      Until then, GoogleSignIn works without serverClientId on Android
+//      because Firebase handles the credential verification server-side.
 // ============================================================
 
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'api_service.dart';
+
+// FIX: Replace this with your Web OAuth 2.0 Client ID from Firebase Console
+// Firebase Console → Project Settings → General → Your Apps → Web App → OAuth Client ID
+// It looks like: XXXXXX-YYYYYYY.apps.googleusercontent.com (client_type: 3)
+// The Android client ID (client_type: 1) will NOT work here.
+const String _webClientId = '208965739273-REPLACE_WITH_WEB_CLIENT_ID.apps.googleusercontent.com';
 
 class GoogleAuthService {
   // ── Singleton ──────────────────────────────────────────
@@ -27,20 +45,23 @@ class GoogleAuthService {
   factory GoogleAuthService() => _instance;
   GoogleAuthService._internal();
 
+  // FIX: Only pass serverClientId if it's been set to the real web client ID.
+  // Using the Android client ID as serverClientId breaks Google Sign-In.
   final _googleSignIn = GoogleSignIn(
     scopes: ['email', 'profile'],
-    serverClientId: '208965739273-0m50fpgsronmjc78ngck7a8fu8koa551.apps.googleusercontent.com',
+    // Leave serverClientId out until you have the correct WEB client ID.
+    // Once you have it, uncomment the line below and replace _webClientId.
+    // serverClientId: _webClientId,
   );
   final _firebaseAuth = FirebaseAuth.instance;
 
   // ── Main Sign-In Method ─────────────────────────────────
-  /// Returns: 'new_user' | 'existing_user' | throws Exception
+  /// Returns: GoogleSignInResult | throws Exception
   Future<GoogleSignInResult> signIn() async {
     try {
       // Step 1: Google Account picker dikhao
       final googleUser = await _googleSignIn.signIn();
       if (googleUser == null) {
-        // User ne cancel kiya
         throw GoogleSignInCancelledException();
       }
 
@@ -88,6 +109,7 @@ class GoogleAuthService {
     } on FirebaseAuthException catch (e) {
       throw Exception(_firebaseErrorMessage(e.code));
     } catch (e) {
+      if (e is Exception) rethrow;
       throw Exception('Google login mein error aaya. Dobara try karo.');
     }
   }
@@ -98,7 +120,6 @@ class GoogleAuthService {
       _googleSignIn.signOut(),
       _firebaseAuth.signOut(),
     ]);
-    // Clear stored JWT
     await ApiService().clearToken();
   }
 
@@ -115,6 +136,8 @@ class GoogleAuthService {
         return 'Internet connection check karo.';
       case 'too-many-requests':
         return 'Bahut zyada attempts. Thodi der baad try karo.';
+      case 'sign_in_failed':
+        return 'Google Sign-In fail hua. Firebase Console mein SHA-1 fingerprint add kiya?';
       default:
         return 'Login fail hua ($code). Dobara try karo.';
     }
