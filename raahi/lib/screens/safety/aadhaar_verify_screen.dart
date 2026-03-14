@@ -226,7 +226,7 @@ class _AadhaarVerifyScreenState extends State<AadhaarVerifyScreen> {
           decoration: BoxDecoration(
             color: AppTheme.navyLight,
             borderRadius: BorderRadius.circular(10),
-            border: Border.all(color: AppTheme.border),
+            border: Border.all(color: AppTheme.cardBorder),
           ),
           child: const Row(children: [
             Icon(Icons.privacy_tip_outlined, color: AppTheme.textSecondary, size: 16),
@@ -259,18 +259,18 @@ class _AadhaarVerifyScreenState extends State<AadhaarVerifyScreen> {
           ),
           decoration: InputDecoration(
             hintText: 'XXXX XXXX XXXX',
-            hintStyle: TextStyle(color: AppTheme.muted, letterSpacing: 2, fontSize: 18),
+            hintStyle: TextStyle(color: AppTheme.textMuted, letterSpacing: 2, fontSize: 18),
             prefixIcon: const Icon(Icons.credit_card, color: AppTheme.primary),
             filled: true,
             fillColor: AppTheme.navyLight,
             counterText: '',
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(color: AppTheme.border),
+              borderSide: BorderSide(color: AppTheme.cardBorder),
             ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(color: AppTheme.border),
+              borderSide: BorderSide(color: AppTheme.cardBorder),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
@@ -321,17 +321,17 @@ class _AadhaarVerifyScreenState extends State<AadhaarVerifyScreen> {
             ),
             decoration: InputDecoration(
               hintText: '------',
-              hintStyle: TextStyle(color: AppTheme.muted, letterSpacing: 8, fontSize: 22),
+              hintStyle: TextStyle(color: AppTheme.textMuted, letterSpacing: 8, fontSize: 22),
               counterText: '',
               filled: true,
               fillColor: AppTheme.navyLight,
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide(color: AppTheme.border),
+                borderSide: BorderSide(color: AppTheme.cardBorder),
               ),
               enabledBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide(color: AppTheme.border),
+                borderSide: BorderSide(color: AppTheme.cardBorder),
               ),
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
@@ -411,17 +411,17 @@ class _AadhaarVerifyScreenState extends State<AadhaarVerifyScreen> {
         width: 28, height: 28,
         decoration: BoxDecoration(
           shape: BoxShape.circle,
-          color: active ? AppTheme.primary : AppTheme.muted.withOpacity(0.3),
+          color: active ? AppTheme.primary : AppTheme.textMuted.withOpacity(0.3),
         ),
         child: Center(child: Text(num,
             style: TextStyle(
-              color: active ? Colors.white : AppTheme.muted,
+              color: active ? Colors.white : AppTheme.textMuted,
               fontWeight: FontWeight.w800, fontSize: 14,
             ))),
       ),
       const SizedBox(width: 10),
       Text(title, style: TextStyle(
-        color: active ? AppTheme.textPrimary : AppTheme.muted,
+        color: active ? AppTheme.textPrimary : AppTheme.textMuted,
         fontWeight: FontWeight.w700, fontSize: 16,
       )),
     ]);
