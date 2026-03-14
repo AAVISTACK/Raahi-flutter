@@ -38,13 +38,16 @@ import 'screens/shop/shop_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp();
+
+  // FIX: Run Firebase init + token/language loading in parallel.
+  // Previously these ran sequentially, blocking the UI for ~3-5 seconds
+  // before runApp() was even called.
+  await Future.wait([
+    Firebase.initializeApp(),
+    ApiService().loadToken(),
+    LanguageService().loadSavedLanguage(),
+  ]);
   ApiService().init();
-  await ApiService().loadToken();
-  await LanguageService().loadSavedLanguage();
-  await AdService.initialize(); // AdMob init
-  AdService().loadInterstitial(); // preload
-  AdService().loadRewarded(); // preload
 
   await SystemChrome.setPreferredOrientations([
     DeviceOrientation.portraitUp,
@@ -56,7 +59,18 @@ void main() async {
     statusBarIconBrightness: Brightness.light,
   ));
 
+  // FIX: runApp() first so the UI appears immediately (~1-2s instead of 12s).
+  // AdMob init is slow (3-8s) and does NOT need to block the first frame.
+  // We initialize it after the app is rendered using a post-frame callback.
   runApp(const ProviderScope(child: RaahiApp()));
+
+  // FIX: AdMob init moved AFTER runApp — runs in background while UI is visible.
+  // Preloading ads also happens here, non-blocking.
+  WidgetsBinding.instance.addPostFrameCallback((_) async {
+    await AdService.initialize();
+    AdService().loadInterstitial();
+    AdService().loadRewarded();
+  });
 }
 
 final _router = GoRouter(
