@@ -28,6 +28,7 @@ class _PhoneLoginScreenState extends State<PhoneLoginScreen> {
       return;
     }
     setState(() => _otpLoading = true);
+    print('[PhoneAuth] Sending OTP to +91$phone...');
 
     await FirebaseAuth.instance.verifyPhoneNumber(
       phoneNumber: '+91$phone',
@@ -35,27 +36,38 @@ class _PhoneLoginScreenState extends State<PhoneLoginScreen> {
 
       // Android pe auto-detect hota hai — seedha login
       verificationCompleted: (PhoneAuthCredential credential) async {
+        print('[PhoneAuth] verificationCompleted — Android auto sign-in...');
+        // FIX: Was silently swallowing errors with catch (_) {}
+        // Now errors are logged and shown to the user.
         try {
           final userCred = await FirebaseAuth.instance.signInWithCredential(credential);
           final idToken  = await userCred.user!.getIdToken();
+          print('[PhoneAuth] Auto sign-in OK, calling backend...');
           final res = await ApiService().verifyOtp('+91$phone', idToken!);
           await ApiService().setToken(res['token'] as String);
           final isNewUser = res['is_new_user'] as bool? ?? false;
+          print('[PhoneAuth] Backend OK, isNewUser=$isNewUser');
           if (mounted) isNewUser ? context.go('/profile-setup') : context.go('/home');
-        } catch (_) {}
+        } catch (e) {
+          print('[PhoneAuth] verificationCompleted error: $e');
+          if (mounted) _snack('Auto login mein error. Manually OTP daalo.');
+        }
       },
 
       verificationFailed: (FirebaseAuthException e) {
+        // FIX: Now logs the exact error code for easier debugging
+        print('[PhoneAuth] verificationFailed: code=${e.code}, message=${e.message}');
         if (mounted) {
           setState(() => _otpLoading = false);
           _snack(e.code == 'invalid-phone-number'
               ? 'Sahi phone number daalo'
-              : 'OTP bhejne mein error. Dobara try karo.');
+              : 'OTP bhejne mein error (${e.code}). Dobara try karo.');
         }
       },
 
       // OTP SMS gaya — OTP screen pe navigate karo verificationId ke saath
       codeSent: (String verificationId, int? resendToken) {
+        print('[PhoneAuth] codeSent — navigating to OTP screen...');
         if (mounted) {
           setState(() => _otpLoading = false);
           context.push('/otp', extra: {
@@ -65,7 +77,9 @@ class _PhoneLoginScreenState extends State<PhoneLoginScreen> {
         }
       },
 
-      codeAutoRetrievalTimeout: (_) {},
+      codeAutoRetrievalTimeout: (String verificationId) {
+        print('[PhoneAuth] codeAutoRetrievalTimeout — verificationId=$verificationId');
+      },
     );
   }
 

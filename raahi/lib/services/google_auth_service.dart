@@ -16,25 +16,29 @@
 //       ↓
 //   ApiService mein JWT save → HomeScreen
 //
-// FIX: Removed incorrect serverClientId — was using Android OAuth client ID
-//      (client_type: 1) which caused Google Sign-In to fail silently.
-//      serverClientId must be the WEB OAuth client ID (client_type: 3).
-//      To get the web client ID:
-//        1. Firebase Console → Project Settings → General
-//        2. Scroll to "Your apps" → Web app (add one if missing)
-//        3. Or: console.cloud.google.com → APIs → Credentials →
-//           Look for "Web client (auto created by Google Service)" OAuth 2.0 ID
-//        4. Set WEB_CLIENT_ID below.
-//      Until then, GoogleSignIn works without serverClientId on Android
-//      because Firebase handles the credential verification server-side.
+// FIX 1: Removed serverClientId from GoogleSignIn() for Android.
+//         Setting serverClientId causes ApiException: 10 (DEVELOPER_ERROR)
+//         when the value doesn't match what Firebase expects.
+//         Firebase resolves OAuth credentials automatically via google-services.json.
+//
+// FIX 2: Added step-by-step debug logs — visible in: flutter run / logcat.
+//         Each step prints OK or the exact failure point so you can diagnose fast.
+//
+// IMPORTANT — If ApiException: 10 still occurs after this fix:
+//   Your SHA-1 fingerprint is not registered in Firebase Console.
+//   Steps to fix:
+//     1. Run: keytool -list -v -keystore ~/.android/debug.keystore
+//              -alias androiddebugkey -storepass android -keypass android
+//     2. Copy the SHA-1 fingerprint shown
+//     3. Firebase Console → Project Settings → Android App (com.raahi.app)
+//        → Add fingerprint → paste SHA-1 → Save
+//     4. Re-download google-services.json → replace android/app/google-services.json
+//     5. flutter clean && flutter pub get && flutter run
 // ============================================================
 
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'api_service.dart';
-
-// Web OAuth 2.0 Client ID from google-services.json (client_type: 3)
-const String _webClientId = '313987257887-of94j4jn4rbm5puvocrc6ulctpqmve8l.apps.googleusercontent.com';
 
 class GoogleAuthService {
   // ── Singleton ──────────────────────────────────────────
@@ -42,9 +46,10 @@ class GoogleAuthService {
   factory GoogleAuthService() => _instance;
   GoogleAuthService._internal();
 
+  // FIX: serverClientId removed — it was causing ApiException: 10.
+  // Firebase handles credential verification automatically via google-services.json.
   final _googleSignIn = GoogleSignIn(
     scopes: ['email', 'profile'],
-    serverClientId: _webClientId,
   );
   final _firebaseAuth = FirebaseAuth.instance;
 
@@ -53,29 +58,47 @@ class GoogleAuthService {
   Future<GoogleSignInResult> signIn() async {
     try {
       // Step 1: Google Account picker dikhao
+      print('[GoogleAuth] Step 1: Opening Google account picker...');
       final googleUser = await _googleSignIn.signIn();
       if (googleUser == null) {
+        print('[GoogleAuth] Step 1: User cancelled sign-in.');
         throw GoogleSignInCancelledException();
       }
+      print('[GoogleAuth] Step 1 OK: email=${googleUser.email}');
 
       // Step 2: Google Auth tokens lo
+      print('[GoogleAuth] Step 2: Fetching Google auth tokens...');
       final googleAuth = await googleUser.authentication;
+      print('[GoogleAuth] Step 2 OK: idToken=${googleAuth.idToken != null ? "present" : "NULL — SHA-1 issue!"}');
+      print('[GoogleAuth] Step 2 OK: accessToken=${googleAuth.accessToken != null ? "present" : "NULL"}');
+
       if (googleAuth.idToken == null) {
-        throw Exception('Google ID token nahi mila. Try again.');
+        throw Exception(
+          'Google ID token nahi mila. '
+          'Firebase Console mein SHA-1 fingerprint add karo aur google-services.json update karo.',
+        );
       }
 
       // Step 3: Firebase credential banao
+      print('[GoogleAuth] Step 3: Creating Firebase credential...');
       final credential = GoogleAuthProvider.credential(
         accessToken: googleAuth.accessToken,
         idToken: googleAuth.idToken,
       );
+      print('[GoogleAuth] Step 3 OK');
 
       // Step 4: Firebase mein sign in karo
+      print('[GoogleAuth] Step 4: Signing into Firebase...');
       final userCredential = await _firebaseAuth.signInWithCredential(credential);
       final firebaseUser = userCredential.user!;
+      print('[GoogleAuth] Step 4 OK: uid=${firebaseUser.uid}, email=${firebaseUser.email}');
 
       // Step 5: Firebase ID token backend ko bhejo → apna JWT lo
+      print('[GoogleAuth] Step 5: Getting Firebase ID token for backend...');
       final firebaseToken = await firebaseUser.getIdToken();
+      print('[GoogleAuth] Step 5 OK: firebaseToken=${firebaseToken != null ? "present" : "NULL"}');
+
+      print('[GoogleAuth] Step 6: Calling backend googleSignIn API...');
       final result = await ApiService().googleSignIn(
         firebaseToken: firebaseToken!,
         email: firebaseUser.email ?? '',
@@ -83,12 +106,15 @@ class GoogleAuthService {
         photoUrl: firebaseUser.photoURL ?? '',
         googleId: firebaseUser.uid,
       );
+      print('[GoogleAuth] Step 6 OK: backend token=${result['token'] != null ? "present" : "NULL"}');
 
-      // Step 6: JWT save karo
+      // Step 7: JWT save karo
       await ApiService().setToken(result['token']);
 
       final isNewUser = result['is_new_user'] == true ||
           userCredential.additionalUserInfo?.isNewUser == true;
+
+      print('[GoogleAuth] Sign-in complete! isNewUser=$isNewUser');
 
       return GoogleSignInResult(
         isNewUser: isNewUser,
@@ -100,8 +126,10 @@ class GoogleAuthService {
     } on GoogleSignInCancelledException {
       rethrow;
     } on FirebaseAuthException catch (e) {
+      print('[GoogleAuth] FirebaseAuthException: code=${e.code}, message=${e.message}');
       throw Exception(_firebaseErrorMessage(e.code));
     } catch (e) {
+      print('[GoogleAuth] Unexpected error: $e');
       if (e is Exception) rethrow;
       throw Exception('Google login mein error aaya. Dobara try karo.');
     }
@@ -114,6 +142,7 @@ class GoogleAuthService {
       _firebaseAuth.signOut(),
     ]);
     await ApiService().clearToken();
+    print('[GoogleAuth] Signed out successfully.');
   }
 
   // ── Currently signed-in user ────────────────────────────
@@ -130,7 +159,7 @@ class GoogleAuthService {
       case 'too-many-requests':
         return 'Bahut zyada attempts. Thodi der baad try karo.';
       case 'sign_in_failed':
-        return 'Google Sign-In fail hua. Firebase Console mein SHA-1 fingerprint add kiya?';
+        return 'Google Sign-In fail hua. Firebase Console mein SHA-1 fingerprint add karo.';
       default:
         return 'Login fail hua ($code). Dobara try karo.';
     }
