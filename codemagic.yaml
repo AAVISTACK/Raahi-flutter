@@ -6,27 +6,78 @@ workflows:
       flutter: 3.19.0
       java: 17
     scripts:
-      - name: Flutter pub get + Build APK
+      - name: Get SHA-1 fingerprint (copy from logs for Firebase Console)
         script: |
-          # Find Flutter project root
+          echo "========================================="
+          echo "DEBUG KEYSTORE SHA-1 FINGERPRINT:"
+          echo "========================================="
+          keytool -list -v \
+            -keystore ~/.android/debug.keystore \
+            -alias androiddebugkey \
+            -storepass android \
+            -keypass android 2>/dev/null | grep "SHA1:" || \
+          keytool -list -v \
+            -keystore ~/.android/debug.keystore \
+            -storepass android 2>/dev/null | grep "SHA1:" || \
+          echo "Debug keystore not found yet (will appear after first build)"
+          echo "========================================="
+
+      - name: Flutter pub get
+        script: |
           if [ -d "raahi" ]; then
             PROJECT_DIR="raahi"
           else
             PROJECT_DIR="."
           fi
-          
-          echo "Building from: $PROJECT_DIR"
           cd $PROJECT_DIR
-          
-          # Show structure
-          ls -la android/
-          
-          # Get packages
           flutter pub get
-          
-          # Build debug APK
+
+      - name: Generate app icons
+        script: |
+          if [ -d "raahi" ]; then
+            PROJECT_DIR="raahi"
+          else
+            PROJECT_DIR="."
+          fi
+          cd $PROJECT_DIR
+          dart run flutter_launcher_icons
+
+      - name: Generate native splash screen
+        script: |
+          if [ -d "raahi" ]; then
+            PROJECT_DIR="raahi"
+          else
+            PROJECT_DIR="."
+          fi
+          cd $PROJECT_DIR
+          dart run flutter_native_splash:create
+
+      - name: Build Debug APK
+        script: |
+          if [ -d "raahi" ]; then
+            PROJECT_DIR="raahi"
+          else
+            PROJECT_DIR="."
+          fi
+          cd $PROJECT_DIR
           flutter build apk --debug --no-tree-shake-icons
-          
+
+      - name: Print SHA-1 from built APK keystore
+        script: |
+          echo "========================================="
+          echo "SHA-1 TO ADD IN FIREBASE CONSOLE:"
+          echo "========================================="
+          keytool -list -v \
+            -keystore ~/.android/debug.keystore \
+            -alias androiddebugkey \
+            -storepass android \
+            -keypass android 2>/dev/null | grep "SHA1:"
+          echo "========================================="
+          echo "Steps: Firebase Console → raahi-2269b →"
+          echo "Project Settings → Your Apps → Android →"
+          echo "Add fingerprint → paste SHA1 above → Save"
+          echo "========================================="
+
     artifacts:
       - "**/flutter-apk/app-debug.apk"
       - "**/outputs/**/*.apk"
