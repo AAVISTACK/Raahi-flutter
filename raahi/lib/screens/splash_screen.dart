@@ -174,13 +174,9 @@ class _SplashScreenState extends State<SplashScreen>
 
   Widget _buildLogo() {
     return Container(
-      width: 110, height: 110,
+      width: 130, height: 130,
       decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        gradient: const RadialGradient(
-          colors: [AppTheme.saffron, AppTheme.saffronDark],
-          center: Alignment(-0.3, -0.3),
-        ),
+        borderRadius: BorderRadius.circular(28),
         boxShadow: [
           BoxShadow(color: AppTheme.saffron.withOpacity(0.5),
               blurRadius: 35, spreadRadius: 5),
@@ -188,8 +184,15 @@ class _SplashScreenState extends State<SplashScreen>
               blurRadius: 60, spreadRadius: 15),
         ],
       ),
-      child: const Icon(Icons.directions_car_rounded,
-          color: Colors.white, size: 56),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(28),
+        child: Image.asset(
+          'assets/icons/splash_logo.png',
+          width: 130,
+          height: 130,
+          fit: BoxFit.cover,
+        ),
+      ),
     );
   }
 }
