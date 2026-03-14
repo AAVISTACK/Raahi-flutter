@@ -34,6 +34,10 @@ class _NearbyPlacesScreenState extends State<NearbyPlacesScreen> {
     setState(() => _loading = true);
     try {
       final pos = await _location.getCurrentPosition();
+      if (pos == null) {
+        setState(() => _loading = false);
+        return;
+      }
       _lat = pos.latitude;
       _lng = pos.longitude;
       await _loadPlaces();

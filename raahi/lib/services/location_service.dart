@@ -78,8 +78,10 @@ class LocationService {
 
   // Calculate distance between two points
   double distanceBetween(
-    double startLat, double startLng,
-    double endLat, double endLng,
+    double startLat,
+    double startLng,
+    double endLat,
+    double endLng,
   ) {
     return Geolocator.distanceBetween(startLat, startLng, endLat, endLng) / 1000; // km
   }

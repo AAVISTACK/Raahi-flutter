@@ -7,6 +7,7 @@ import '../../services/api_service.dart';
 import '../../services/socket_service.dart';
 import '../../services/ad_service.dart';
 import '../../services/safety_service.dart';
+import '../../services/location_service.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class ActiveJobScreen extends StatefulWidget {
@@ -258,9 +259,9 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
                       color: AppTheme.textPrimary, fontWeight: FontWeight.w700, fontSize: 16)),
                   Row(children: [
                     const Icon(Icons.star_rounded, color: AppTheme.yellow, size: 14),
-                    Text(' \${helper.ratingAvg.toStringAsFixed(1)}',
+                    Text(' ${helper.ratingAvg.toStringAsFixed(1)}',
                         style: const TextStyle(color: AppTheme.textSecondary, fontSize: 12)),
-                    Text(' · \${helper.totalHelps} helps',
+                    Text(' · ${helper.totalHelps} helps',
                         style: const TextStyle(color: AppTheme.textMuted, fontSize: 12)),
                   ]),
                   Text(helper.phone, style: const TextStyle(
@@ -269,7 +270,7 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
               )),
               IconButton(
                 onPressed: () async {
-                  final uri = Uri.parse('tel:\${helper.phone}');
+                  final uri = Uri.parse('tel:${helper.phone}');
                   if (await canLaunchUrl(uri)) await launchUrl(uri);
                 },
                 icon: Container(
