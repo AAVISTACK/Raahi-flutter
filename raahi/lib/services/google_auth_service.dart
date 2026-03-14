@@ -33,11 +33,8 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'api_service.dart';
 
-// FIX: Replace this with your Web OAuth 2.0 Client ID from Firebase Console
-// Firebase Console → Project Settings → General → Your Apps → Web App → OAuth Client ID
-// It looks like: XXXXXX-YYYYYYY.apps.googleusercontent.com (client_type: 3)
-// The Android client ID (client_type: 1) will NOT work here.
-const String _webClientId = '208965739273-REPLACE_WITH_WEB_CLIENT_ID.apps.googleusercontent.com';
+// Web OAuth 2.0 Client ID from google-services.json (client_type: 3)
+const String _webClientId = '208965739273-0m50fpgsronmjc78ngck7a8fu8koa551.apps.googleusercontent.com';
 
 class GoogleAuthService {
   // ── Singleton ──────────────────────────────────────────
@@ -45,13 +42,9 @@ class GoogleAuthService {
   factory GoogleAuthService() => _instance;
   GoogleAuthService._internal();
 
-  // FIX: Only pass serverClientId if it's been set to the real web client ID.
-  // Using the Android client ID as serverClientId breaks Google Sign-In.
   final _googleSignIn = GoogleSignIn(
     scopes: ['email', 'profile'],
-    // Leave serverClientId out until you have the correct WEB client ID.
-    // Once you have it, uncomment the line below and replace _webClientId.
-    // serverClientId: _webClientId,
+    serverClientId: _webClientId,
   );
   final _firebaseAuth = FirebaseAuth.instance;
 
