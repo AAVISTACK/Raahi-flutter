@@ -3,8 +3,8 @@ class AppConstants {
   // ══════════════════════════════════════════════════════════
   // ✅ 1. BACKEND URL  →  Line 9 & 10
   // ══════════════════════════════════════════════════════════
-  static const String baseUrl = 'https://raahibacken-dzip--ankushv00.repl.co/api/v1'; // ← LINE 9
-  static const String wsUrl   = 'wss://raahibacken-dzip--ankushv00.repl.co';          // ← LINE 10
+  static const String baseUrl = 'https://ada45316-64e9-49fa-b252-2f1d26ddb93f-00-2k2mwxfvfw7vq.worf.replit.dev/api/v1'; // ← LINE 9
+  static const String wsUrl   = 'wss://ada45316-64e9-49fa-b252-2f1d26ddb93f-00-2k2mwxfvfw7vq.worf.replit.dev';          // ← LINE 10
 
   // ══════════════════════════════════════════════════════════
   // ✅ 2. GOOGLE MAPS KEY  →  Line 17
