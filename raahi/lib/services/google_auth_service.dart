@@ -50,6 +50,7 @@ class GoogleAuthService {
   // Firebase handles credential verification automatically via google-services.json.
   final _googleSignIn = GoogleSignIn(
     scopes: ['email', 'profile'],
+    serverClientId: '313987257887-of94j4jn4rbm5puvocrc6ulctpqmve8l.apps.googleusercontent.com',
   );
   final _firebaseAuth = FirebaseAuth.instance;
 
