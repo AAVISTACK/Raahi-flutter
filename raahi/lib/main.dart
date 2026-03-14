@@ -114,9 +114,6 @@ final _router = GoRouter(
       },
     ),
 
-    // Shop sub-screens
-    GoRoute(
-    ),
   ],
 );
 
