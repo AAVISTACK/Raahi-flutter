@@ -33,6 +33,10 @@ class _SplashScreenState extends State<SplashScreen>
   void initState() {
     super.initState();
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
+    // Pre-cache splash background so it renders instantly, no flicker
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      precacheImage(const AssetImage('assets/images/splash_bg.jpg'), context);
+    });
 
     // ── Main sequence: 1 400 ms total ──────────────────────────
     _mainCtrl = AnimationController(
@@ -123,8 +127,8 @@ class _SplashScreenState extends State<SplashScreen>
       if (mounted) _dotsCtrl.repeat();
     });
 
-    // ── Navigate after 3 500 ms — check auth first ─────────────
-    Future.delayed(const Duration(milliseconds: 3500), () async {
+    // ── Navigate after 1 800 ms — animation done at 1 400 ms ────
+    Future.delayed(const Duration(milliseconds: 1800), () async {
       if (!mounted) return;
       final prefs = await SharedPreferences.getInstance();
       final token = prefs.getString('auth_token');
