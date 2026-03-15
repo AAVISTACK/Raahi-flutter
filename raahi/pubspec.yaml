@@ -86,17 +86,15 @@ flutter_launcher_icons:
 
 # ─── Splash Screen ─────────────────────────────────────────────────────────────
 flutter_native_splash:
-  color: "#0D1B40"
-  image: assets/icons/splash_logo.png
-  color_dark: "#0D1B40"
-  image_dark: assets/icons/splash_logo.png
+  # Matches Flutter SplashScreen background — seamless transition
+  color: "#1A2A6C"
+  color_dark: "#1A2A6C"
+  image: assets/icons/app_icon.png
+  image_dark: assets/icons/app_icon.png
   android_12:
-    color: "#0D1B40"
-    image: assets/icons/splash_logo.png
-  fullscreen: true
-  android: true
-  ios: false
-
+    color: "#1A2A6C"
+    color_dark: "#1A2A6C"
+    image: assets/icons/app_icon.png
 flutter:
   uses-material-design: true
   assets:
