@@ -5,8 +5,8 @@ class AppConstants {
   // ══════════════════════════════════════════════════════════
   // FIX: Updated from dead worf.replit.dev dev URL to deployed production URL
   // The backend Node.js API runs at /api/v1 on the deployed Replit app
-  static const String baseUrl = 'https://auth-fixer--avi75296.replit.app/api/v1'; // ← LINE 9
-  static const String wsUrl   = 'wss://auth-fixer--avi75296.replit.app';           // ← LINE 10
+  static const String baseUrl = 'https://web-production-e6c90c.up.railway.app/api/v1'; // ← LINE 9
+  static const String wsUrl   = 'wss://web-production-e6c90c.up.railway.app';           // ← LINE 10
 
   // ══════════════════════════════════════════════════════════
   // ✅ 2. GOOGLE MAPS KEY  →  Line 17
