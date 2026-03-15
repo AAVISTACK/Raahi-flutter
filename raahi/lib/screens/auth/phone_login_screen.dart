@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+import 'package:sendotp_flutter_sdk/sendotp_flutter_sdk.dart';
 import '../../theme/app_theme.dart';
 import '../../services/api_service.dart';
 import '../../services/google_auth_service.dart';
@@ -20,7 +20,7 @@ class _PhoneLoginScreenState extends State<PhoneLoginScreen> {
   bool _otpLoading    = false;
   bool _googleLoading = false;
 
-  // ── Phone OTP via Firebase ────────────────────────────────
+  // ── Phone OTP via MSG91 ────────────────────────────────────────────
   Future<void> _sendOtp() async {
     final phone = _phoneCtrl.text.trim();
     if (phone.length != 10) {
@@ -28,59 +28,24 @@ class _PhoneLoginScreenState extends State<PhoneLoginScreen> {
       return;
     }
     setState(() => _otpLoading = true);
-    print('[PhoneAuth] Sending OTP to +91$phone...');
-
-    await FirebaseAuth.instance.verifyPhoneNumber(
-      phoneNumber: '+91$phone',
-      timeout: const Duration(seconds: 60),
-
-      // Android pe auto-detect hota hai — seedha login
-      verificationCompleted: (PhoneAuthCredential credential) async {
-        print('[PhoneAuth] verificationCompleted — Android auto sign-in...');
-        // FIX: Was silently swallowing errors with catch (_) {}
-        // Now errors are logged and shown to the user.
-        try {
-          final userCred = await FirebaseAuth.instance.signInWithCredential(credential);
-          final idToken  = await userCred.user!.getIdToken();
-          print('[PhoneAuth] Auto sign-in OK, calling backend...');
-          final res = await ApiService().verifyOtp('+91$phone', idToken!);
-          await ApiService().setToken(res['token'] as String);
-          final isNewUser = res['is_new_user'] as bool? ?? false;
-          print('[PhoneAuth] Backend OK, isNewUser=$isNewUser');
-          if (mounted) isNewUser ? context.go('/profile-setup') : context.go('/home');
-        } catch (e) {
-          print('[PhoneAuth] verificationCompleted error: $e');
-          if (mounted) _snack('Auto login mein error. Manually OTP daalo.');
-        }
-      },
-
-      verificationFailed: (FirebaseAuthException e) {
-        // FIX: Now logs the exact error code for easier debugging
-        print('[PhoneAuth] verificationFailed: code=${e.code}, message=${e.message}');
-        if (mounted) {
-          setState(() => _otpLoading = false);
-          _snack(e.code == 'invalid-phone-number'
-              ? 'Sahi phone number daalo'
-              : 'OTP bhejne mein error (${e.code}). Dobara try karo.');
-        }
-      },
-
-      // OTP SMS gaya — OTP screen pe navigate karo verificationId ke saath
-      codeSent: (String verificationId, int? resendToken) {
-        print('[PhoneAuth] codeSent — navigating to OTP screen...');
-        if (mounted) {
-          setState(() => _otpLoading = false);
-          context.push('/otp', extra: {
-            'phone': '+91$phone',
-            'verificationId': verificationId,
-          });
-        }
-      },
-
-      codeAutoRetrievalTimeout: (String verificationId) {
-        print('[PhoneAuth] codeAutoRetrievalTimeout — verificationId=$verificationId');
-      },
-    );
+    print('[MSG91] Sending OTP to +91$phone...');
+    try {
+      final fullPhone = '+91$phone';
+      final authToken = await ApiService().getMSG91AuthToken(fullPhone);
+      await OTPWidget.initializeWidget('36636f726646343938363634', authToken);
+      await OTPWidget.sendOTP({'identifier': fullPhone});
+      print('[MSG91] OTP sent successfully');
+      if (mounted) {
+        setState(() => _otpLoading = false);
+        context.push('/otp', extra: {'phone': fullPhone});
+      }
+    } catch (e) {
+      print('[MSG91] Error sending OTP: $e');
+      if (mounted) {
+        setState(() => _otpLoading = false);
+        _snack('OTP bhejne mein error. Dobara try karo.');
+      }
+    }
   }
 
   // ── Google Sign-In ────────────────────────────────────────
