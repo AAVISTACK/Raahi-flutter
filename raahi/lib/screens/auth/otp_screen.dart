@@ -1,8 +1,8 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:dio/dio.dart';
 import 'package:go_router/go_router.dart';
-import 'package:sendotp_flutter_sdk/sendotp_flutter_sdk.dart';
 import '../../theme/app_theme.dart';
 import '../../services/api_service.dart';
 
@@ -75,9 +75,11 @@ class _OtpScreenState extends State<OtpScreen> {
     for (final c in _controllers) c.clear();
     _focusNodes[0].requestFocus();
     try {
-      final authToken = await ApiService().getMSG91AuthToken(widget.phone);
-      await OTPWidget.initializeWidget('36636f726646343938363634', authToken);
-      await OTPWidget.sendOTP({'identifier': widget.phone});
+      final dio = Dio();
+      await dio.post(
+        'https://web-production-e6c90c.up.railway.app/api/v1/auth/send-otp',
+        data: {'phone': widget.phone},
+      );
       _startResendTimer();
     } catch (e) {
       if (mounted) _showError('OTP bhejne mein error. Dobara try karo.');
