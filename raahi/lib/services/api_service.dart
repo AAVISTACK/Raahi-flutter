@@ -58,6 +58,18 @@ class ApiService {
     return res.data;
   }
 
+  Future<String> getMSG91AuthToken(String phone) async {
+    final res = await _dio.get('/auth/msg91-token',
+        queryParameters: {'phone': phone});
+    return res.data['auth_token'] as String;
+  }
+
+  Future<Map<String, dynamic>> verifyMSG91Otp(String phone, String otp) async {
+    final res = await _dio.post('/auth/otp/verify-msg91',
+        data: {'phone': phone, 'otp': otp});
+    return res.data;
+  }
+
   // ── USER ──────────────────────────────────────────────
   Future<UserModel> getProfile() async {
     final res = await _dio.get('/users/profile');
