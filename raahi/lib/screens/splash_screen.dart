@@ -20,11 +20,7 @@ class _SplashScreenState extends State<SplashScreen> {
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('auth_token');
     if (!mounted) return;
-    if (token != null && token.isNotEmpty) {
-      context.go('/home');
-    } else {
-      context.go('/onboarding');
-    }
+    context.go('/home') }
   }
 
   @override
