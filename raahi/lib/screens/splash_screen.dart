@@ -1,5 +1,7 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 
 class SplashScreen extends StatefulWidget {
@@ -30,6 +32,7 @@ class _SplashScreenState extends State<SplashScreen>
   @override
   void initState() {
     super.initState();
+    SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
 
     // ── Main sequence: 1 400 ms total ──────────────────────────
     _mainCtrl = AnimationController(
@@ -120,9 +123,17 @@ class _SplashScreenState extends State<SplashScreen>
       if (mounted) _dotsCtrl.repeat();
     });
 
-    // ── Navigate to /home after 3 500 ms ───────────────────────
-    Future.delayed(const Duration(milliseconds: 3500), () {
-      if (mounted) context.go('/home');
+    // ── Navigate after 3 500 ms — check auth first ─────────────
+    Future.delayed(const Duration(milliseconds: 3500), () async {
+      if (!mounted) return;
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('auth_token');
+      if (!mounted) return;
+      if (token != null && token.isNotEmpty) {
+        context.go('/home');
+      } else {
+        context.go('/phone-login');
+      }
     });
   }
 
@@ -148,6 +159,7 @@ class _SplashScreenState extends State<SplashScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: const Color(0xFF0A0E21),
       body: AnimatedBuilder(
         animation: Listenable.merge([_mainCtrl, _pulseCtrl, _dotsCtrl]),
         builder: (context, _) {
@@ -163,88 +175,97 @@ class _SplashScreenState extends State<SplashScreen>
               ),
               color: const Color(0xFF0A0E21),
             ),
-            child: SafeArea(
-              child: Column(
+            child: SizedBox.expand(
+              child: Stack(
                 children: [
-                  const Spacer(flex: 3),
+                  // Centered main content
+                  Center(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        // Icon
+                        Opacity(
+                          opacity: _iconOpacity.value,
+                          child: Transform.scale(
+                            scale: _iconScale.value * _pulseScale.value,
+                            child: SizedBox(
+                              width: 120,
+                              height: 120,
+                              child: CustomPaint(painter: _RaahiIconPainter()),
+                            ),
+                          ),
+                        ),
 
-                  // ── Icon ───────────────────────────────────
-                  Opacity(
-                    opacity: _iconOpacity.value,
-                    child: Transform.scale(
-                      scale: _iconScale.value * _pulseScale.value,
-                      child: SizedBox(
-                        width: 120,
-                        height: 120,
-                        child: CustomPaint(painter: _RaahiIconPainter()),
-                      ),
+                        const SizedBox(height: 36),
+
+                        // App name
+                        FadeTransition(
+                          opacity: _textOpacity,
+                          child: SlideTransition(
+                            position: _textSlide,
+                            child: const Text(
+                              'Raahi',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 42,
+                                fontWeight: FontWeight.w800,
+                                letterSpacing: 4.0,
+                              ),
+                            ),
+                          ),
+                        ),
+
+                        const SizedBox(height: 10),
+
+                        // Tagline
+                        FadeTransition(
+                          opacity: _taglineOpacity,
+                          child: const Text(
+                            'Your Roadside Companion',
+                            style: TextStyle(
+                              color: Color(0xFF00D4AA),
+                              fontSize: 16,
+                              fontWeight: FontWeight.w400,
+                              letterSpacing: 2.0,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
 
-                  const SizedBox(height: 36),
-
-                  // ── App name ────────────────────────────────
-                  FadeTransition(
-                    opacity: _textOpacity,
-                    child: SlideTransition(
-                      position: _textSlide,
-                      child: const Text(
-                        'Raahi',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 42,
-                          fontWeight: FontWeight.w800,
-                          letterSpacing: 4.0,
+                  // Animated dots at bottom
+                  Positioned(
+                    bottom: 48,
+                    left: 0,
+                    right: 0,
+                    child: Center(
+                      child: FadeTransition(
+                        opacity: _taglineOpacity,
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: List.generate(3, (i) {
+                            return Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 5),
+                              child: Transform.scale(
+                                scale: _dotScale(i),
+                                child: Container(
+                                  width: 8,
+                                  height: 8,
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFF00D4AA)
+                                        .withOpacity(_dotOpacity(i)),
+                                    shape: BoxShape.circle,
+                                  ),
+                                ),
+                              ),
+                            );
+                          }),
                         ),
                       ),
                     ),
                   ),
-
-                  const SizedBox(height: 10),
-
-                  // ── Tagline ─────────────────────────────────
-                  FadeTransition(
-                    opacity: _taglineOpacity,
-                    child: const Text(
-                      'Your Roadside Companion',
-                      style: TextStyle(
-                        color: Color(0xFF00D4AA),
-                        fontSize: 16,
-                        fontWeight: FontWeight.w400,
-                        letterSpacing: 2.0,
-                      ),
-                    ),
-                  ),
-
-                  const Spacer(flex: 3),
-
-                  // ── Animated dots ───────────────────────────
-                  FadeTransition(
-                    opacity: _taglineOpacity,
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: List.generate(3, (i) {
-                        return Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 5),
-                          child: Transform.scale(
-                            scale: _dotScale(i),
-                            child: Container(
-                              width: 8,
-                              height: 8,
-                              decoration: BoxDecoration(
-                                color: const Color(0xFF00D4AA)
-                                    .withOpacity(_dotOpacity(i)),
-                                shape: BoxShape.circle,
-                              ),
-                            ),
-                          ),
-                        );
-                      }),
-                    ),
-                  ),
-
-                  const SizedBox(height: 48),
                 ],
               ),
             ),
