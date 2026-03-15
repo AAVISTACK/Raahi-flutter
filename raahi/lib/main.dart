@@ -85,7 +85,7 @@ final _router = GoRouter(
         final extra = state.extra as Map<String, dynamic>;
         return OtpScreen(
           phone: extra['phone'] as String,
-          verificationId: extra['verificationId'] as String,
+
         );
       },
     ),
