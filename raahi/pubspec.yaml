@@ -25,7 +25,6 @@ dependencies:
   shared_preferences: ^2.2.2
 
   # Maps & Location
-  google_maps_flutter: ^2.6.0
   geolocator: ^11.0.0
   geocoding: ^3.0.0
   flutter_map: ^7.0.2
@@ -62,7 +61,6 @@ dependencies:
   connectivity_plus: ^6.0.2
   vibration: ^1.8.4
 
-  sendotp_flutter_sdk: ^1.0.0
   cupertino_icons: ^1.0.6
 
 dev_dependencies:
