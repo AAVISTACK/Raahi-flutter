@@ -54,6 +54,8 @@ class _AiMechanicScreenState extends State<AiMechanicScreen>
   bool _speechAvailable = false;
   int _freeMessages = 5;
   bool _showRewardedButton = false;
+  bool _hasError = false;
+  String _errorMsg = '';
   final String _sessionId = DateTime.now().millisecondsSinceEpoch.toString();
 
   // Processing animation
@@ -198,10 +200,12 @@ class _AiMechanicScreenState extends State<AiMechanicScreen>
         if (mounted) _resultCtrls[i].forward();
       }
     } catch (e) {
-      setState(() => _step = _Step.input);
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-          content: Text('Network error. Please try again.')));
+        setState(() {
+          _step = _Step.input;
+          _hasError = true;
+          _errorMsg = 'Network error. Internet connection check karo aur dobara try karo.';
+        });
       }
     }
   }
@@ -237,7 +241,7 @@ class _AiMechanicScreenState extends State<AiMechanicScreen>
 
   void _reset() {
     for (final c in _resultCtrls) c.reset();
-    setState(() { _step = _Step.input; _result = null; });
+    setState(() { _step = _Step.input; _result = null; _hasError = false; _errorMsg = ''; });
   }
 
   List<String> get _suggestions => const [
@@ -339,6 +343,36 @@ class _AiMechanicScreenState extends State<AiMechanicScreen>
       children: [
         // Step indicator
         _buildStepIndicator(1),
+
+        // Error banner with retry
+        if (_hasError)
+          Container(
+            margin: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+            decoration: BoxDecoration(
+              color: AppTheme.red.withOpacity(0.12),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: AppTheme.red.withOpacity(0.3)),
+            ),
+            child: Row(children: [
+              const Icon(Icons.wifi_off_rounded, color: AppTheme.red, size: 18),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(_errorMsg,
+                  style: const TextStyle(color: AppTheme.textPrimary, fontSize: 12)),
+              ),
+              TextButton(
+                onPressed: () { setState(() => _hasError = false); _analyze(); },
+                style: TextButton.styleFrom(
+                  foregroundColor: AppTheme.primary,
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                  minimumSize: Size.zero,
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                ),
+                child: const Text('Retry', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13)),
+              ),
+            ]),
+          ),
 
         Expanded(child: SingleChildScrollView(
           physics: const BouncingScrollPhysics(),
