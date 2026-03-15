@@ -46,11 +46,10 @@ class GoogleAuthService {
   factory GoogleAuthService() => _instance;
   GoogleAuthService._internal();
 
-  // FIX: serverClientId removed — it was causing ApiException: 10.
+  // serverClientId has been removed — it was causing ApiException: 10 (DEVELOPER_ERROR) on Android.
   // Firebase handles credential verification automatically via google-services.json.
   final _googleSignIn = GoogleSignIn(
     scopes: ['email', 'profile'],
-    serverClientId: '313987257887-of94j4jn4rbm5puvocrc6ulctpqmve8l.apps.googleusercontent.com',
   );
   final _firebaseAuth = FirebaseAuth.instance;
 
