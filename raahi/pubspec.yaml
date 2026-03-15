@@ -1,112 +1,112 @@
 name: raahi
-description: AI-powered highway assistance app for Indian drivers
-publish_to: 'none'
-version: 1.0.0+1
+  description: AI-powered highway assistance app for Indian drivers
+  publish_to: 'none'
+  version: 1.0.0+1
 
-environment:
-  sdk: '>=3.4.0 <4.0.0'
+  environment:
+    sdk: '>=3.4.0 <4.0.0'
 
-dependencies:
-  flutter:
-    sdk: flutter
+  dependencies:
+    flutter:
+      sdk: flutter
 
-  # State Management
-  flutter_riverpod: ^2.6.1
+    # State Management
+    flutter_riverpod: ^2.6.1
 
-  # Navigation
-  go_router: ^13.2.0
+    # Navigation
+    go_router: ^13.2.0
 
-  # HTTP & Networking
-  dio: ^5.7.0
-  socket_io_client: ^2.0.3+1
+    # HTTP & Networking
+    dio: ^5.7.0
+    socket_io_client: ^2.0.3+1
 
-  # Local Storage
-  hive_flutter: ^1.1.0
-  shared_preferences: ^2.3.3
+    # Local Storage
+    hive_flutter: ^1.1.0
+    shared_preferences: ^2.3.3
 
-  # Maps & Location
-  google_maps_flutter: ^2.9.0
-  geolocator: ^14.0.2
-  geolocator_android: ^5.0.0
-  geocoding: ^3.0.0
-  flutter_map: ^7.0.2
-  latlong2: ^0.9.1
+    # Maps & Location
+    google_maps_flutter: ^2.9.0
+    geolocator: ^10.1.0
+    geocoding: ^3.0.0
+    flutter_map: ^7.0.2
+    latlong2: ^0.9.1
 
-  # Firebase
-  firebase_core: ^3.8.1
-  firebase_messaging: ^15.2.4
-  firebase_auth: ^5.4.1
-  google_sign_in: ^6.2.2
+    # Firebase
+    firebase_core: ^2.27.0
+    firebase_messaging: ^14.7.19
+    firebase_auth: ^4.17.8
+    google_sign_in: ^6.2.1
 
-  # Payment
+    # Payment
 
-  # Voice & AI
-  speech_to_text: ^6.6.0
-  flutter_tts: ^3.8.5
-  permission_handler: ^11.3.1
+    # Voice & AI
+    speech_to_text: ^6.6.0
+    flutter_tts: ^3.8.5
+    permission_handler: ^11.3.1
 
-  # UI & Media
-  cached_network_image: ^3.4.1
-  image_picker: ^1.1.2
-  lottie: ^3.2.0
-  shimmer: ^3.0.0
-  flutter_svg: ^2.0.14
-  google_fonts: ^6.2.1
+    # UI & Media
+    cached_network_image: ^3.4.1
+    image_picker: ^1.1.2
+    lottie: ^3.1.0
+    shimmer: ^3.0.0
+    flutter_svg: ^2.0.14
+    google_fonts: ^6.2.1
 
-  # AdMob
-  google_mobile_ads: ^4.0.0
+    # AdMob
+    google_mobile_ads: ^4.0.0
 
-  # Utils
-  intl: ^0.19.0
-  url_launcher: ^6.3.1
-  flutter_native_splash: ^2.4.2
-  connectivity_plus: ^6.1.0
-  vibration: ^1.8.4
+    # Utils
+    intl: ^0.19.0
+    url_launcher: ^6.3.1
+    flutter_native_splash: ^2.4.2
+    connectivity_plus: ^6.1.0
+    vibration: ^1.8.4
 
-  cupertino_icons: ^1.0.6
+    cupertino_icons: ^1.0.6
 
-dev_dependencies:
-  flutter_test:
-    sdk: flutter
-  flutter_lints: ^4.0.0
-  flutter_launcher_icons: ^0.14.1
+  dev_dependencies:
+    flutter_test:
+      sdk: flutter
+    flutter_lints: ^4.0.0
+    flutter_launcher_icons: ^0.14.1
 
-flutter_launcher_icons:
-  android: true
-  ios: false
-  image_path: "assets/icons/app_icon.png"
-  min_sdk_android: 23
-  adaptive_icon_background: "#1A237E"
-  adaptive_icon_foreground: "assets/icons/app_icon.png"
-  web:
-    generate: false
-  windows:
-    generate: false
-  macos:
-    generate: false
+  flutter_launcher_icons:
+    android: true
+    ios: false
+    image_path: "assets/icons/app_icon.png"
+    min_sdk_android: 23
+    adaptive_icon_background: "#1A237E"
+    adaptive_icon_foreground: "assets/icons/app_icon.png"
+    web:
+      generate: false
+    windows:
+      generate: false
+    macos:
+      generate: false
 
-flutter_native_splash:
-  color: "#0D1B40"
-  image: assets/icons/splash_logo.png
-  color_dark: "#0D1B40"
-  image_dark: assets/icons/splash_logo.png
-  android_12:
+  flutter_native_splash:
     color: "#0D1B40"
     image: assets/icons/splash_logo.png
-  fullscreen: true
-  android: true
-  ios: false
+    color_dark: "#0D1B40"
+    image_dark: assets/icons/splash_logo.png
+    android_12:
+      color: "#0D1B40"
+      image: assets/icons/splash_logo.png
+    fullscreen: true
+    android: true
+    ios: false
 
-flutter:
-  uses-material-design: true
-  assets:
-    - assets/icons/
-    - assets/lottie/
-  # fonts:                    # Uncomment + Rajdhani TTF files assets/fonts/ mein rakho
-  #   - family: Rajdhani
-  #     fonts:
-  #       - asset: assets/fonts/Rajdhani-Regular.ttf
-  #       - asset: assets/fonts/Rajdhani-SemiBold.ttf
-  #         weight: 600
-  #       - asset: assets/fonts/Rajdhani-Bold.ttf
-  #         weight: 700
+  flutter:
+    uses-material-design: true
+    assets:
+      - assets/icons/
+      - assets/lottie/
+    # fonts:                    # Uncomment + Rajdhani TTF files assets/fonts/ mein rakho
+    #   - family: Rajdhani
+    #     fonts:
+    #       - asset: assets/fonts/Rajdhani-Regular.ttf
+    #       - asset: assets/fonts/Rajdhani-SemiBold.ttf
+    #         weight: 600
+    #       - asset: assets/fonts/Rajdhani-Bold.ttf
+    #         weight: 700
+  

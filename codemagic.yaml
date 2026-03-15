@@ -1,89 +1,90 @@
 workflows:
-  android-debug:
-    name: Raahi Android Debug APK
-    max_build_duration: 60
-    environment:
-      flutter: 3.24.0
-      java: 17
+    android-debug:
+      name: Raahi Android Debug APK
+      max_build_duration: 60
+      environment:
+        flutter: 3.19.0
+        java: 17
 
-    scripts:
-      - name: Setup fixed keystore (SHA-1 permanent — never changes)
-        script: |
-          echo "========================================="
-          echo "Setting up FIXED keystore from repo..."
-          echo "========================================="
+      scripts:
+        - name: Setup fixed keystore (SHA-1 permanent — never changes)
+          script: |
+            echo "========================================="
+            echo "Setting up FIXED keystore from repo..."
+            echo "========================================="
 
-          # Path to our committed keystore
-          KEYSTORE_P12="$CM_BUILD_DIR/raahi/keystore/raahi-debug.p12"
-          DEBUG_KEYSTORE="$HOME/.android/debug.keystore"
+            # Path to our committed keystore
+            KEYSTORE_P12="$CM_BUILD_DIR/raahi/keystore/raahi-debug.p12"
+            DEBUG_KEYSTORE="$HOME/.android/debug.keystore"
 
-          mkdir -p "$HOME/.android"
+            mkdir -p "$HOME/.android"
 
-          # Convert our PKCS12 to standard Android debug.keystore format
-          # so flutter build apk --debug uses it automatically
-          keytool -importkeystore \
-            -srckeystore "$KEYSTORE_P12" \
-            -srcstoretype PKCS12 \
-            -srcstorepass "raahi@debug2024" \
-            -srcalias "raahi-debug" \
-            -destkeystore "$DEBUG_KEYSTORE" \
-            -deststoretype JKS \
-            -deststorepass "android" \
-            -destalias "androiddebugkey" \
-            -destkeypass "android" \
-            -noprompt 2>&1
+            # Convert our PKCS12 to standard Android debug.keystore format
+            # so flutter build apk --debug uses it automatically
+            keytool -importkeystore \
+              -srckeystore "$KEYSTORE_P12" \
+              -srcstoretype PKCS12 \
+              -srcstorepass "raahi@debug2024" \
+              -srcalias "raahi-debug" \
+              -destkeystore "$DEBUG_KEYSTORE" \
+              -deststoretype JKS \
+              -deststorepass "android" \
+              -destalias "androiddebugkey" \
+              -destkeypass "android" \
+              -noprompt 2>&1
 
-          echo ""
-          echo "========================================="
-          echo "✅ FIXED SHA-1 (always same every build):"
-          keytool -list -v \
-            -keystore "$DEBUG_KEYSTORE" \
-            -alias androiddebugkey \
-            -storepass android \
-            -keypass android 2>/dev/null | grep "SHA1:"
-          echo "========================================="
+            echo ""
+            echo "========================================="
+            echo "✅ FIXED SHA-1 (always same every build):"
+            keytool -list -v \
+              -keystore "$DEBUG_KEYSTORE" \
+              -alias androiddebugkey \
+              -storepass android \
+              -keypass android 2>/dev/null | grep "SHA1:"
+            echo "========================================="
 
-      - name: Flutter pub get
-        script: |
-          if [ -d "raahi" ]; then
-            PROJECT_DIR="raahi"
-          else
-            PROJECT_DIR="."
-          fi
-          cd $PROJECT_DIR
-          flutter pub get
+        - name: Flutter pub get
+          script: |
+            if [ -d "raahi" ]; then
+              PROJECT_DIR="raahi"
+            else
+              PROJECT_DIR="."
+            fi
+            cd $PROJECT_DIR
+            flutter pub get
 
-      - name: Generate app icons
-        script: |
-          if [ -d "raahi" ]; then
-            PROJECT_DIR="raahi"
-          else
-            PROJECT_DIR="."
-          fi
-          cd $PROJECT_DIR
-          dart run flutter_launcher_icons
+        - name: Generate app icons
+          script: |
+            if [ -d "raahi" ]; then
+              PROJECT_DIR="raahi"
+            else
+              PROJECT_DIR="."
+            fi
+            cd $PROJECT_DIR
+            dart run flutter_launcher_icons
 
-      - name: Generate native splash screen
-        script: |
-          if [ -d "raahi" ]; then
-            PROJECT_DIR="raahi"
-          else
-            PROJECT_DIR="."
-          fi
-          cd $PROJECT_DIR
-          dart run flutter_native_splash:create
+        - name: Generate native splash screen
+          script: |
+            if [ -d "raahi" ]; then
+              PROJECT_DIR="raahi"
+            else
+              PROJECT_DIR="."
+            fi
+            cd $PROJECT_DIR
+            dart run flutter_native_splash:create
 
-      - name: Build Debug APK
-        script: |
-          if [ -d "raahi" ]; then
-            PROJECT_DIR="raahi"
-          else
-            PROJECT_DIR="."
-          fi
-          cd $PROJECT_DIR
-          flutter build apk --debug --no-tree-shake-icons
-          echo "✅ Build complete with fixed keystore!"
+        - name: Build Debug APK
+          script: |
+            if [ -d "raahi" ]; then
+              PROJECT_DIR="raahi"
+            else
+              PROJECT_DIR="."
+            fi
+            cd $PROJECT_DIR
+            flutter build apk --debug --no-tree-shake-icons
+            echo "✅ Build complete with fixed keystore!"
 
-    artifacts:
-      - "**/flutter-apk/app-debug.apk"
-      - "**/outputs/**/*.apk"
+      artifacts:
+        - "**/flutter-apk/app-debug.apk"
+        - "**/outputs/**/*.apk"
+  
