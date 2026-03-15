@@ -83,12 +83,16 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
         borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
       builder: (_) => ListenableBuilder(
         listenable: _lang,
-        builder: (ctx, __) => Padding(
-          padding: const EdgeInsets.fromLTRB(20, 14, 20, 36),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
+        builder: (ctx, __) => ConstrainedBox(
+          constraints: BoxConstraints(
+            maxHeight: MediaQuery.of(ctx).size.height * 0.7,
+          ),
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.fromLTRB(20, 14, 20, 36),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
               Center(child: Container(width: 40, height: 4,
                 decoration: BoxDecoration(color: AppTheme.cardBorder,
                     borderRadius: BorderRadius.circular(2)))),
@@ -140,7 +144,8 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
           ),
         ),
       ),
-    );
+    ),
+  );
   }
 
   // ── BUILD ──────────────────────────────────────────────────
