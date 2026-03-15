@@ -24,6 +24,7 @@ import '../../services/api_service.dart';
 import '../../services/location_service.dart';
 import '../../services/mock_mechanic_service.dart';
 import '../../models/breakdown_request.dart';
+import 'dart:ui' as ui;
 
 class MechanicsMapScreen extends StatefulWidget {
   final BreakdownRequest? breakdownRequest;
@@ -702,7 +703,7 @@ class _PinTailPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()..color = color;
-    final path = Path()
+    final path = ui.Path()
       ..moveTo(0, 0)
       ..lineTo(size.width / 2, size.height)
       ..lineTo(size.width, 0)
