@@ -36,8 +36,6 @@ dependencies:
   firebase_auth: ^4.17.8
   google_sign_in: ^6.2.1
 
-  # Payment
-
   # Voice & AI
   speech_to_text: ^6.6.0
   flutter_tts: ^3.8.5
@@ -69,13 +67,16 @@ dev_dependencies:
   flutter_lints: ^3.0.0
   flutter_launcher_icons: ^0.13.1
 
+# ─── App Icon ──────────────────────────────────────────────────────────────────
+# FIX: Use app_icon_fg.png (foreground-only, centered in safe zone) for adaptive
+# icon so it doesn't get cut off. app_icon.png remains the legacy fallback icon.
 flutter_launcher_icons:
   android: "launcher_icon"
   ios: false
   image_path: "assets/icons/app_icon.png"
-  min_sdk_android: 23
-  adaptive_icon_background: "#FF6B00"
-  adaptive_icon_foreground: "assets/icons/app_icon.png"
+  min_sdk_android: 21
+  adaptive_icon_background: "#0D1B40"
+  adaptive_icon_foreground: "assets/icons/app_icon_fg.png"
   web:
     generate: false
   windows:
@@ -83,6 +84,7 @@ flutter_launcher_icons:
   macos:
     generate: false
 
+# ─── Splash Screen ─────────────────────────────────────────────────────────────
 flutter_native_splash:
   color: "#0D1B40"
   image: assets/icons/splash_logo.png
@@ -100,12 +102,4 @@ flutter:
   assets:
     - assets/icons/
     - assets/lottie/
-  # fonts:                    # Uncomment + Rajdhani TTF files assets/fonts/ mein rakho
-  #   - family: Rajdhani
-  #     fonts:
-  #       - asset: assets/fonts/Rajdhani-Regular.ttf
-  #       - asset: assets/fonts/Rajdhani-SemiBold.ttf
-  #         weight: 600
-  #       - asset: assets/fonts/Rajdhani-Bold.ttf
-  #         weight: 700
-
+    - assets/data/
