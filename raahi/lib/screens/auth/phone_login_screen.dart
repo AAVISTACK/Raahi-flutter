@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:dio/dio.dart';
 import 'package:go_router/go_router.dart';
-import 'package:sendotp_flutter_sdk/sendotp_flutter_sdk.dart';
 import '../../theme/app_theme.dart';
 import '../../services/api_service.dart';
 import '../../services/google_auth_service.dart';
@@ -31,9 +31,11 @@ class _PhoneLoginScreenState extends State<PhoneLoginScreen> {
     print('[MSG91] Sending OTP to +91$phone...');
     try {
       final fullPhone = '+91$phone';
-      final authToken = await ApiService().getMSG91AuthToken(fullPhone);
-      await OTPWidget.initializeWidget('36636f726646343938363634', authToken);
-      await OTPWidget.sendOTP({'identifier': fullPhone});
+      final dio = Dio();
+      await dio.post(
+        'https://web-production-e6c90c.up.railway.app/api/v1/auth/send-otp',
+        data: {'phone': fullPhone},
+      );
       print('[MSG91] OTP sent successfully');
       if (mounted) {
         setState(() => _otpLoading = false);
