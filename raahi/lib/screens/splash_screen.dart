@@ -163,19 +163,20 @@ class _SplashScreenState extends State<SplashScreen>
       body: AnimatedBuilder(
         animation: Listenable.merge([_mainCtrl, _pulseCtrl, _dotsCtrl]),
         builder: (context, _) {
-          return Container(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [
-                  const Color(0xFF0A0E21).withOpacity(_bgOpacity.value),
-                  const Color(0xFF16213E).withOpacity(_bgOpacity.value),
-                ],
+          return Stack(
+            fit: StackFit.expand,
+            children: [
+              // ── Full-screen splash background ──────────────
+              Image.asset(
+                'assets/images/splash_bg.jpg',
+                fit: BoxFit.cover,
+                width: double.infinity,
+                height: double.infinity,
               ),
-              color: const Color(0xFF0A0E21),
-            ),
-            child: SizedBox.expand(
+              // ── Dark overlay for text readability ──────────
+              Container(color: const Color(0x88000000)),
+              // ── Animated content ───────────────────────────
+              SizedBox.expand(
               child: Stack(
                 children: [
                   // Centered main content
@@ -269,6 +270,7 @@ class _SplashScreenState extends State<SplashScreen>
                 ],
               ),
             ),
+            ],
           );
         },
       ),
