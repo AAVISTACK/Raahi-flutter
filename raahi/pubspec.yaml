@@ -95,6 +95,10 @@ flutter_native_splash:
     color: "#1A2A6C"
     color_dark: "#1A2A6C"
     image: assets/icons/app_icon.png
+  fullscreen: true
+  android: true
+  ios: false
+
 flutter:
   uses-material-design: true
   assets:
