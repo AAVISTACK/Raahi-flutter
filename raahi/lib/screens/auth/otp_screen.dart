@@ -2,18 +2,16 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+import 'package:sendotp_flutter_sdk/sendotp_flutter_sdk.dart';
 import '../../theme/app_theme.dart';
 import '../../services/api_service.dart';
 
 class OtpScreen extends StatefulWidget {
   final String phone;
-  final String verificationId;
 
   const OtpScreen({
     super.key,
     required this.phone,
-    required this.verificationId,
   });
 
   @override
@@ -28,12 +26,10 @@ class _OtpScreenState extends State<OtpScreen> {
   bool _loading = false;
   int _resendSeconds = 60;
   Timer? _timer;
-  late String _currentVerificationId;
 
   @override
   void initState() {
     super.initState();
-    _currentVerificationId = widget.verificationId;
     _startResendTimer();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _focusNodes[0].requestFocus();
@@ -55,78 +51,37 @@ class _OtpScreenState extends State<OtpScreen> {
 
   String get _otp => _controllers.map((c) => c.text).join();
 
-  // ── Verify OTP via Firebase ──────────────────────────────
+  // ── Verify OTP via MSG91 backend ─────────────────────────────
   Future<void> _verify() async {
     if (_otp.length != 6) return;
     setState(() => _loading = true);
-
     try {
-      // Firebase credential banao OTP se
-      final credential = PhoneAuthProvider.credential(
-        verificationId: _currentVerificationId,
-        smsCode: _otp,
-      );
-
-      // Firebase se sign in karo
-      final userCred = await FirebaseAuth.instance.signInWithCredential(credential);
-      final idToken  = await userCred.user!.getIdToken();
-
-      // Backend ko idToken bhejo → apna JWT lo
-      final res = await ApiService().verifyOtp(widget.phone, idToken!);
+      final res = await ApiService().verifyMSG91Otp(widget.phone, _otp);
       final token     = res['token'] as String;
       final isNewUser = res['is_new_user'] as bool? ?? false;
-
       await ApiService().setToken(token);
-
       if (mounted) {
         isNewUser ? context.go('/profile-setup') : context.go('/home');
       }
-    } on FirebaseAuthException catch (e) {
-      if (mounted) {
-        final msg = e.code == 'invalid-verification-code'
-            ? 'Galat OTP hai. Dobara check karo.'
-            : e.code == 'session-expired'
-                ? 'OTP expire ho gaya. Resend karo.'
-                : 'Error: ${e.message}';
-        _showError(msg);
-      }
     } catch (e) {
-      if (mounted) _showError('Kuch problem aayi. Dobara try karo.');
+      if (mounted) _showError('Galat OTP hai ya expire ho gaya. Dobara try karo.');
     } finally {
       if (mounted) setState(() => _loading = false);
     }
   }
 
-  // ── Resend OTP ───────────────────────────────────────────
+  // ── Resend OTP via MSG91 ─────────────────────────────────────
   Future<void> _resendOtp() async {
     for (final c in _controllers) c.clear();
     _focusNodes[0].requestFocus();
-
-    await FirebaseAuth.instance.verifyPhoneNumber(
-      phoneNumber: widget.phone,
-      timeout: const Duration(seconds: 60),
-      verificationCompleted: (PhoneAuthCredential credential) async {
-        final userCred = await FirebaseAuth.instance.signInWithCredential(credential);
-        final idToken  = await userCred.user!.getIdToken();
-        final res = await ApiService().verifyOtp(widget.phone, idToken!);
-        await ApiService().setToken(res['token'] as String);
-        final isNewUser = res['is_new_user'] as bool? ?? false;
-        if (mounted) isNewUser ? context.go('/profile-setup') : context.go('/home');
-      },
-      verificationFailed: (e) {
-        if (mounted) _showError('OTP bhejne mein error. Dobara try karo.');
-      },
-      codeSent: (String newVerificationId, int? _) {
-        _currentVerificationId = newVerificationId;
-        _startResendTimer();
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Naya OTP bheja gaya!')),
-          );
-        }
-      },
-      codeAutoRetrievalTimeout: (_) {},
-    );
+    try {
+      final authToken = await ApiService().getMSG91AuthToken(widget.phone);
+      await OTPWidget.initializeWidget('36636f726646343938363634', authToken);
+      await OTPWidget.sendOTP({'identifier': widget.phone});
+      _startResendTimer();
+    } catch (e) {
+      if (mounted) _showError('OTP bhejne mein error. Dobara try karo.');
+    }
   }
 
   void _showError(String msg) {
