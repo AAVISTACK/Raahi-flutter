@@ -78,6 +78,10 @@ final _router = GoRouter(
   routes: [
     GoRoute(path: '/', builder: (_, __) => const SplashScreen()),
     GoRoute(path: '/onboarding', builder: (_, __) => const OnboardingScreen()),
+    GoRoute(
+      path: '/phone-login',
+      builder: (context, state) => const PhoneLoginScreen(),
+    ),
     GoRoute(path: '/login', builder: (_, __) => const PhoneLoginScreen()),
     GoRoute(
       path: '/otp',
