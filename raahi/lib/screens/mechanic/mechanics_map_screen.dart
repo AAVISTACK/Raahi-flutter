@@ -1,12 +1,14 @@
 // ============================================================
-// lib/screens/mechanic/mechanics_map_screen.dart  — v2
+// lib/screens/mechanic/mechanics_map_screen.dart — v3
 //
-// Uber-style nearby mechanics screen.
-// • OSM map with two marker types: breakdown (red car) + mechanic (blue wrench)
-// • Tap mechanic marker → bottom sheet with details + call + request
-// • Scrollable "Nearby Mechanics" list below map, sorted by distance
-// • Retains existing filter bar and mechanic card UI
-// • Falls back to mock data when backend is unavailable
+// Ola/Google Maps style full-screen mechanic finder.
+// • Full-screen flutter_map (OSM tiles)
+// • Green pin = available mechanic, Red pin = busy/closed
+// • Floating filter chips at top
+// • Mechanic list bottom sheet (draggable)
+// • Tap marker/card → detail sheet with Call + Request buttons
+// • Floating SOS button (bottom-right)
+// • Falls back to mock data when backend unavailable
 // ============================================================
 
 import 'dart:math' as math;
@@ -22,15 +24,9 @@ import '../../services/api_service.dart';
 import '../../services/location_service.dart';
 import '../../services/mock_mechanic_service.dart';
 import '../../models/breakdown_request.dart';
-import '../../widgets/ui_components.dart';
-import '../../widgets/ad_banner_widget.dart';
-import '../../utils/constants.dart';
 
 class MechanicsMapScreen extends StatefulWidget {
-  /// If opened from BreakdownLocationPickerScreen, the confirmed request
-  /// is passed in so the map pre-centers on it.
   final BreakdownRequest? breakdownRequest;
-
   const MechanicsMapScreen({super.key, this.breakdownRequest});
 
   @override
@@ -41,995 +37,796 @@ class _MechanicsMapScreenState extends State<MechanicsMapScreen>
     with TickerProviderStateMixin {
 
   // ── Map ────────────────────────────────────────────────────
-  final _mapCtrl = MapController();
-  LatLng _userLocation = const LatLng(20.5937, 78.9629); // India default
-  bool _locationReady = false;
+  final _mapCtrl    = MapController();
+  LatLng _userLoc   = const LatLng(20.5937, 78.9629);
+  bool   _locReady  = false;
 
   // ── Data ───────────────────────────────────────────────────
   List<MechanicModel> _mechanics = [];
-  bool _loading = true;
-  String _selectedFilter = 'All';
-  final _filters = ['All', 'Puncture', 'Engine', 'AC', 'Battery', 'Towing', 'Emergency'];
+  bool   _loading        = true;
+  String _filter         = 'All';
+  static const _filters  = ['All','Puncture','Engine','AC','Battery','Towing','Emergency'];
 
-  // ── Selected marker ────────────────────────────────────────
+  // ── Selection ──────────────────────────────────────────────
   MechanicModel? _selected;
 
-  // ── Panel animation ────────────────────────────────────────
-  late AnimationController _sheetCtrl;
-  late Animation<Offset> _sheetSlide;
+  // ── Bottom sheet controller ────────────────────────────────
+  final DraggableScrollableController _sheetCtrl = DraggableScrollableController();
 
-  // ── Map/list toggle ────────────────────────────────────────
-  bool _showMap = true;
+  // ── Detail sheet animation ─────────────────────────────────
+  late AnimationController _detailAnim;
+  late Animation<Offset>   _detailSlide;
 
   @override
   void initState() {
     super.initState();
-    _sheetCtrl = AnimationController(vsync: this,
-        duration: const Duration(milliseconds: 320));
-    _sheetSlide = Tween<Offset>(
-        begin: const Offset(0, 1), end: Offset.zero)
-        .animate(CurvedAnimation(parent: _sheetCtrl, curve: Curves.easeOutCubic));
+    _detailAnim = AnimationController(
+        vsync: this, duration: const Duration(milliseconds: 300));
+    _detailSlide = Tween<Offset>(begin: const Offset(0, 1), end: Offset.zero)
+        .animate(CurvedAnimation(parent: _detailAnim, curve: Curves.easeOutCubic));
     _init();
   }
 
   @override
   void dispose() {
-    _sheetCtrl.dispose();
+    _detailAnim.dispose();
     _mapCtrl.dispose();
+    _sheetCtrl.dispose();
     super.dispose();
   }
 
-  // ── Init: get location → load mechanics ───────────────────
+  // ── Init ───────────────────────────────────────────────────
   Future<void> _init() async {
-    // If breakdown location was passed in, use it as center
     if (widget.breakdownRequest != null) {
-      _userLocation = LatLng(
-        widget.breakdownRequest!.latitude,
-        widget.breakdownRequest!.longitude,
-      );
-      _locationReady = true;
+      _userLoc  = LatLng(widget.breakdownRequest!.latitude, widget.breakdownRequest!.longitude);
+      _locReady = true;
     } else {
       final pos = await LocationService().getCurrentPosition();
       if (pos != null && mounted) {
-        _userLocation = LatLng(pos.latitude, pos.longitude);
-        _locationReady = true;
+        _userLoc  = LatLng(pos.latitude, pos.longitude);
+        _locReady = true;
       }
     }
     await _loadMechanics();
-    if (mounted && _locationReady) {
-      _mapCtrl.move(_userLocation, 15.0);
-    }
+    if (mounted && _locReady) _mapCtrl.move(_userLoc, 14.5);
   }
 
-  // ── Load mechanics (backend with mock fallback) ────────────
   Future<void> _loadMechanics() async {
     if (!mounted) return;
     setState(() { _loading = true; _mechanics = []; });
 
     List<MechanicModel> result = [];
-
-    // Try backend first
     try {
       result = await ApiService().getNearbyMechanics(
-        lat: _userLocation.latitude,
-        lng: _userLocation.longitude,
-        specialization: _selectedFilter == 'All' ? null : _selectedFilter.toLowerCase(),
+        lat: _userLoc.latitude,
+        lng: _userLoc.longitude,
+        specialization: _filter == 'All' ? null : _filter.toLowerCase(),
       );
     } catch (_) {
-      // Backend unavailable — use mock data
-      result = _selectedFilter == 'All'
-          ? MockMechanicService().getNearby(userLocation: _userLocation)
+      result = _filter == 'All'
+          ? MockMechanicService().getNearby(userLocation: _userLoc)
           : MockMechanicService().getBySpecialization(
-              userLocation: _userLocation,
-              specialization: _selectedFilter);
+              userLocation: _userLoc, specialization: _filter);
     }
 
     if (mounted) setState(() { _mechanics = result; _loading = false; });
   }
 
-  // ── Tap mechanic ───────────────────────────────────────────
   void _selectMechanic(MechanicModel m) {
     setState(() => _selected = m);
-    _sheetCtrl.forward();
-    // Pan map to mechanic location
+    _detailAnim.forward();
     _mapCtrl.move(LatLng(m.lat, m.lng), 16.0);
     HapticFeedback.lightImpact();
+    // Collapse list sheet so detail is visible
+    _sheetCtrl.animateTo(0.08,
+        duration: const Duration(milliseconds: 200), curve: Curves.easeOut);
   }
 
   void _deselect() {
-    _sheetCtrl.reverse().then((_) {
+    _detailAnim.reverse().then((_) {
       if (mounted) setState(() => _selected = null);
     });
   }
 
-  // ── Phone call ─────────────────────────────────────────────
-  Future<void> _callMechanic(String? phone) async {
+  Future<void> _call(String? phone) async {
     if (phone == null) return;
     final uri = Uri.parse('tel:${phone.replaceAll(' ', '')}');
     if (await canLaunchUrl(uri)) launchUrl(uri);
+  }
+
+  Future<void> _requestMechanic(MechanicModel m) async {
+    HapticFeedback.mediumImpact();
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        backgroundColor: AppTheme.cardBg,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Text('Request Sent!', style: TextStyle(color: AppTheme.textPrimary)),
+        content: Text(
+          '${m.shopName} ko request bhej di gayi hai.\nWoh jald hi contact karenge.',
+          style: const TextStyle(color: AppTheme.textSecondary),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('OK', style: TextStyle(color: AppTheme.primary)),
+          ),
+        ],
+      ),
+    );
   }
 
   // ── BUILD ──────────────────────────────────────────────────
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      extendBodyBehindAppBar: true,
       backgroundColor: AppTheme.bg,
-      body: Column(children: [
-        _buildAppBar(),
-        _buildFilterBar(),
-        // Map / List toggle buttons
-        _buildViewToggle(),
-        Expanded(child: _showMap ? _buildMapView() : _buildListView()),
-      ]),
-    );
-  }
+      body: Stack(children: [
 
-  // ── AppBar ─────────────────────────────────────────────────
-  Widget _buildAppBar() {
-    return Container(
-      color: AppTheme.navyLight,
-      padding: EdgeInsets.only(
-        top: MediaQuery.of(context).padding.top + 4,
-        left: 6, right: 16, bottom: 8,
-      ),
-      child: Row(children: [
-        IconButton(
-          icon: const Icon(Icons.arrow_back_rounded, color: AppTheme.textPrimary),
-          onPressed: () => context.pop(),
+        // ── FULL SCREEN MAP ───────────────────────────────────
+        _buildMap(),
+
+        // ── TOP OVERLAY: back + title + filter chips ──────────
+        Positioned(
+          top: 0, left: 0, right: 0,
+          child: _buildTopBar(),
         ),
-        const Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('Nearby Mechanics',
-              style: TextStyle(fontFamily: 'Rajdhani', fontSize: 19,
-                  fontWeight: FontWeight.w700, color: AppTheme.textPrimary)),
-            Text('Tap a marker to see details',
-              style: TextStyle(color: AppTheme.textMuted, fontSize: 11)),
-          ])),
-        // Register shop FAB
-        Pressable(
-          onTap: () => context.push('/mechanic-register'),
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 7),
-            decoration: BoxDecoration(
-              color: AppTheme.primary.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(AppTheme.r12),
-              border: Border.all(color: AppTheme.primary.withOpacity(0.3))),
-            child: const Row(mainAxisSize: MainAxisSize.min, children: [
-              Icon(Icons.add_business_rounded, color: AppTheme.primary, size: 15),
-              SizedBox(width: 5),
-              Text('Register', style: TextStyle(color: AppTheme.primary,
-                  fontSize: 11, fontWeight: FontWeight.w700)),
-            ])),
-        ),
-      ]),
-    );
-  }
 
-  // ── Filter chips ───────────────────────────────────────────
-  Widget _buildFilterBar() {
-    return Container(
-      height: 46,
-      color: AppTheme.navyLight,
-      child: ListView.builder(
-        scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-        itemCount: _filters.length,
-        itemBuilder: (_, i) {
-          final f = _filters[i];
-          final sel = _selectedFilter == f;
-          return Padding(
-            padding: const EdgeInsets.only(right: 8),
-            child: Pressable(
-              onTap: () {
-                setState(() => _selectedFilter = f);
-                _loadMechanics();
-              },
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 200),
-                padding: const EdgeInsets.symmetric(horizontal: 14),
-                decoration: BoxDecoration(
-                  color: sel ? AppTheme.primary : AppTheme.cardBg,
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(
-                    color: sel ? AppTheme.primary : AppTheme.cardBorder)),
-                child: Center(child: Text(f, style: TextStyle(
-                  color: sel ? Colors.white : AppTheme.textSecondary,
-                  fontSize: 12, fontWeight: sel ? FontWeight.w700 : FontWeight.w500))),
-              ),
-            ),
-          );
-        },
-      ),
-    );
-  }
+        // ── MECHANICS LIST BOTTOM SHEET ───────────────────────
+        if (!_loading && _mechanics.isNotEmpty)
+          _buildListSheet(),
 
-  // ── Map / List toggle ──────────────────────────────────────
-  Widget _buildViewToggle() {
-    return Container(
-      color: AppTheme.navyLight,
-      padding: const EdgeInsets.fromLTRB(12, 0, 12, 8),
-      child: Container(
-        height: 36,
-        decoration: BoxDecoration(
-          color: AppTheme.cardBg,
-          borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: AppTheme.cardBorder)),
-        child: Row(children: [
-          _ToggleBtn(
-            label: 'Map', icon: Icons.map_rounded,
-            active: _showMap,
-            onTap: () => setState(() => _showMap = true)),
-          _ToggleBtn(
-            label: 'List', icon: Icons.format_list_bulleted_rounded,
-            active: !_showMap,
-            onTap: () => setState(() => _showMap = false)),
-        ]),
-      ),
-    );
-  }
-
-  // ══════════════════════════════════════════════════════════
-  // MAP VIEW
-  // ══════════════════════════════════════════════════════════
-  Widget _buildMapView() {
-    return Stack(children: [
-      // ── Map
-      FlutterMap(
-        mapController: _mapCtrl,
-        options: MapOptions(
-          initialCenter: _userLocation,
-          initialZoom: 15.0,
-          minZoom: 10.0,
-          maxZoom: 18.0,
-          onTap: (_, __) => _deselect(),
-          interactionOptions: const InteractionOptions(
-            flags: InteractiveFlag.all & ~InteractiveFlag.rotate),
-        ),
-        children: [
-          // OSM tiles with dark tint
-          TileLayer(
-            urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-            userAgentPackageName: 'com.raahi.app',
-            tileBuilder: _darkTile,
-            maxZoom: 18,
+        // ── LOADING INDICATOR ─────────────────────────────────
+        if (_loading)
+          Positioned(
+            bottom: 120, left: 0, right: 0,
+            child: const Center(child: CircularProgressIndicator(color: AppTheme.primary)),
           ),
 
-          // ── Mechanic markers (blue wrench)
-          if (!_loading)
-            MarkerLayer(markers: _mechanics.map((m) {
-              final isSelected = _selected?.id == m.id;
-              return Marker(
-                point: LatLng(m.lat, m.lng),
-                width: isSelected ? 56 : 46,
-                height: isSelected ? 56 : 46,
-                child: _MechanicMarker(
-                  mechanic: m,
-                  selected: isSelected,
-                  onTap: () => _selectMechanic(m),
+        // ── SELECTED MECHANIC DETAIL SHEET ────────────────────
+        if (_selected != null)
+          _buildDetailSheet(),
+
+        // ── FLOATING BUTTONS (right side) ─────────────────────
+        Positioned(
+          right: 16,
+          bottom: _mechanics.isNotEmpty ? 200 : 24,
+          child: _buildFloatingButtons(),
+        ),
+
+        // ── SOS BUTTON (bottom-right) ─────────────────────────
+        Positioned(
+          right: 16,
+          bottom: _mechanics.isNotEmpty ? 140 : 24,
+          child: _buildSosButton(),
+        ),
+
+      ]),
+    );
+  }
+
+  // ── MAP LAYER ──────────────────────────────────────────────
+  Widget _buildMap() {
+    return FlutterMap(
+      mapController: _mapCtrl,
+      options: MapOptions(
+        initialCenter: _userLoc,
+        initialZoom: 14.5,
+        onTap: (_, __) => _deselect(),
+      ),
+      children: [
+        // OSM Tiles
+        TileLayer(
+          urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+          userAgentPackageName: 'com.raahi.app',
+          tileProvider: NetworkTileProvider(),
+        ),
+
+        // Mechanic markers
+        MarkerLayer(
+          markers: _mechanics.map((m) => _mechanicMarker(m)).toList(),
+        ),
+
+        // User location marker
+        if (_locReady)
+          MarkerLayer(markers: [_userMarker()]),
+
+        // Breakdown location marker (if passed)
+        if (widget.breakdownRequest != null)
+          MarkerLayer(markers: [_breakdownMarker()]),
+      ],
+    );
+  }
+
+  Marker _mechanicMarker(MechanicModel m) {
+    final isAvailable = m.isOpen;
+    final isSelected  = _selected?.id == m.id;
+    return Marker(
+      point: LatLng(m.lat, m.lng),
+      width: isSelected ? 52 : 44,
+      height: isSelected ? 62 : 52,
+      child: GestureDetector(
+        onTap: () => _selectMechanic(m),
+        child: _PinWidget(
+          color: isAvailable ? AppTheme.green : AppTheme.red,
+          icon: Icons.build_rounded,
+          label: m.shopName,
+          isSelected: isSelected,
+        ),
+      ),
+    );
+  }
+
+  Marker _userMarker() => Marker(
+    point: _userLoc,
+    width: 50,
+    height: 50,
+    child: Container(
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        color: AppTheme.primary,
+        border: Border.all(color: Colors.white, width: 3),
+        boxShadow: [BoxShadow(color: AppTheme.primary.withOpacity(0.5), blurRadius: 12)],
+      ),
+      child: const Icon(Icons.person_rounded, color: Colors.white, size: 22),
+    ),
+  );
+
+  Marker _breakdownMarker() => Marker(
+    point: LatLng(widget.breakdownRequest!.latitude, widget.breakdownRequest!.longitude),
+    width: 44,
+    height: 52,
+    child: _PinWidget(
+      color: AppTheme.yellow,
+      icon: Icons.car_crash_rounded,
+      label: 'Breakdown',
+      isSelected: false,
+    ),
+  );
+
+  // ── TOP BAR ────────────────────────────────────────────────
+  Widget _buildTopBar() {
+    return Container(
+      padding: EdgeInsets.only(
+        top: MediaQuery.of(context).padding.top + 8,
+        left: 12, right: 12, bottom: 8,
+      ),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topCenter, end: Alignment.bottomCenter,
+          colors: [AppTheme.bg.withOpacity(0.95), Colors.transparent],
+        ),
+      ),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        // Back + Title row
+        Row(children: [
+          _FloatBtn(
+            icon: Icons.arrow_back_ios_new_rounded,
+            onTap: () => context.pop(),
+            tooltip: 'Back',
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              const Text('Nearby Mechanics',
+                  style: TextStyle(color: AppTheme.textPrimary,
+                      fontSize: 17, fontWeight: FontWeight.w700)),
+              Text(
+                _loading ? 'Dhundh raha hai...'
+                    : _mechanics.isEmpty ? 'Koi mechanic nahi mila'
+                    : '${_mechanics.where((m) => m.isOpen).length} available  •  ${_mechanics.length} total',
+                style: const TextStyle(color: AppTheme.textSecondary, fontSize: 12),
+              ),
+            ]),
+          ),
+          _FloatBtn(
+            icon: Icons.refresh_rounded,
+            onTap: _loadMechanics,
+            tooltip: 'Refresh',
+          ),
+        ]),
+
+        const SizedBox(height: 8),
+
+        // Filter chips
+        SizedBox(
+          height: 34,
+          child: ListView.separated(
+            scrollDirection: Axis.horizontal,
+            padding: const EdgeInsets.symmetric(horizontal: 2),
+            separatorBuilder: (_, __) => const SizedBox(width: 6),
+            itemCount: _filters.length,
+            itemBuilder: (_, i) {
+              final f = _filters[i];
+              final selected = _filter == f;
+              return GestureDetector(
+                onTap: () { setState(() => _filter = f); _loadMechanics(); },
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 180),
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: selected ? AppTheme.primary : AppTheme.cardBg.withOpacity(0.9),
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(
+                      color: selected ? AppTheme.primary : AppTheme.cardBorder),
+                  ),
+                  child: Text(f,
+                    style: TextStyle(
+                      color: selected ? Colors.white : AppTheme.textSecondary,
+                      fontSize: 12, fontWeight: FontWeight.w600)),
                 ),
               );
-            }).toList()),
-
-          // ── Breakdown location marker (red car icon)
-          if (widget.breakdownRequest != null)
-            MarkerLayer(markers: [
-              Marker(
-                point: LatLng(
-                  widget.breakdownRequest!.latitude,
-                  widget.breakdownRequest!.longitude),
-                width: 52, height: 60,
-                child: _BreakdownMarker(),
-              ),
-            ]),
-
-          // ── User blue dot
-          if (_locationReady && widget.breakdownRequest == null)
-            MarkerLayer(markers: [
-              Marker(
-                point: _userLocation,
-                width: 22, height: 22,
-                child: Container(
-                  width: 14, height: 14,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: const Color(0xFF4285F4),
-                    border: Border.all(color: Colors.white, width: 2.5),
-                    boxShadow: [BoxShadow(
-                      color: const Color(0xFF4285F4).withOpacity(0.4),
-                      blurRadius: 8, spreadRadius: 2)]),
-                ),
-              ),
-            ]),
-        ],
-      ),
-
-      // ── Loading overlay
-      if (_loading) Positioned.fill(child: IgnorePointer(
-        child: Container(
-          color: AppTheme.bg.withOpacity(0.45),
-          child: const Center(child: CircularProgressIndicator(
-              color: AppTheme.primary, strokeWidth: 3)),
-        ),
-      )),
-
-      // ── Recenter FAB
-      Positioned(
-        right: 12, top: 12,
-        child: Pressable(
-          onTap: () => _mapCtrl.move(_userLocation, 15.0),
-          child: Container(
-            width: 42, height: 42,
-            decoration: BoxDecoration(
-              color: AppTheme.cardBg,
-              borderRadius: BorderRadius.circular(AppTheme.r12),
-              border: Border.all(color: AppTheme.cardBorder),
-              boxShadow: AppTheme.cardShadow),
-            child: const Icon(Icons.my_location_rounded,
-                color: AppTheme.primary, size: 20)),
-        ),
-      ),
-
-      // ── Mechanic count badge
-      Positioned(
-        left: 12, top: 12,
-        child: AnimatedOpacity(
-          opacity: _loading ? 0 : 1,
-          duration: const Duration(milliseconds: 300),
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-            decoration: BoxDecoration(
-              color: AppTheme.cardBg.withOpacity(0.92),
-              borderRadius: BorderRadius.circular(AppTheme.r12),
-              border: Border.all(color: AppTheme.cardBorder)),
-            child: Row(mainAxisSize: MainAxisSize.min, children: [
-              Container(width: 8, height: 8,
-                decoration: BoxDecoration(shape: BoxShape.circle,
-                  color: _mechanics.isNotEmpty ? AppTheme.green : AppTheme.textMuted)),
-              const SizedBox(width: 6),
-              Text('${_mechanics.length} mechanics found',
-                style: const TextStyle(color: AppTheme.textSecondary,
-                    fontSize: 11, fontWeight: FontWeight.w600)),
-            ])),
-        ),
-      ),
-
-      // ── Bottom: Mechanic detail sheet + list section
-      Positioned(
-        bottom: 0, left: 0, right: 0,
-        child: Column(mainAxisSize: MainAxisSize.min, children: [
-          // Selected mechanic bottom sheet
-          if (_selected != null)
-            SlideTransition(
-              position: _sheetSlide,
-              child: _MechanicDetailSheet(
-                mechanic: _selected!,
-                onClose: _deselect,
-                onCall: () => _callMechanic(_selected!.phone),
-                onRequest: () {
-                  _deselect();
-                  context.push('/request-help');
-                },
-              ),
-            ),
-
-          // Compact list strip at bottom when no mechanic selected
-          if (_selected == null && !_loading && _mechanics.isNotEmpty)
-            _buildMapBottomStrip(),
-        ]),
-      ),
-    ]);
-  }
-
-  // ── Compact horizontal mechanic strip below map ────────────
-  Widget _buildMapBottomStrip() {
-    return Container(
-      height: 130,
-      color: AppTheme.bg.withOpacity(0.94),
-      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Padding(
-          padding: const EdgeInsets.fromLTRB(14, 10, 14, 6),
-          child: Row(children: [
-            const Text('Nearby Mechanics',
-              style: TextStyle(fontFamily: 'Rajdhani', fontSize: 15,
-                  fontWeight: FontWeight.w700, color: AppTheme.textPrimary)),
-            const SizedBox(width: 8),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
-              decoration: BoxDecoration(
-                color: AppTheme.primary.withOpacity(0.12),
-                borderRadius: BorderRadius.circular(6)),
-              child: Text('${_mechanics.length}',
-                style: const TextStyle(color: AppTheme.primary,
-                    fontSize: 11, fontWeight: FontWeight.w700))),
-            const Spacer(),
-            Pressable(
-              onTap: () => setState(() => _showMap = false),
-              child: const Text('See all →',
-                style: TextStyle(color: AppTheme.primary, fontSize: 12,
-                    fontWeight: FontWeight.w600))),
-          ]),
-        ),
-        Expanded(
-          child: ListView.builder(
-            scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.fromLTRB(12, 0, 12, 10),
-            itemCount: _mechanics.length,
-            itemBuilder: (_, i) => _MechanicChip(
-              mechanic: _mechanics[i],
-              onTap: () => _selectMechanic(_mechanics[i]),
-            ),
+            },
           ),
         ),
       ]),
     );
   }
 
-  // ══════════════════════════════════════════════════════════
-  // LIST VIEW (full scrollable list)
-  // ══════════════════════════════════════════════════════════
-  Widget _buildListView() {
-    if (_loading) {
-      return const Center(child: CircularProgressIndicator(color: AppTheme.primary));
-    }
-    if (_mechanics.isEmpty) {
-      return Center(child: Column(mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          const Icon(Icons.build_circle_outlined, color: AppTheme.textMuted, size: 56),
-          const SizedBox(height: 14),
-          const Text('No mechanics found nearby',
-            style: TextStyle(color: AppTheme.textSecondary,
-                fontSize: 15, fontWeight: FontWeight.w600)),
-          const SizedBox(height: 6),
-          const Text('Try a different filter or expand your search',
-            style: TextStyle(color: AppTheme.textMuted, fontSize: 12)),
-          const SizedBox(height: 20),
-          Pressable(
-            onTap: () { setState(() => _selectedFilter = 'All'); _loadMechanics(); },
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-              decoration: BoxDecoration(
-                color: AppTheme.primary.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(AppTheme.r12),
-                border: Border.all(color: AppTheme.primary.withOpacity(0.3))),
-              child: const Text('Reset Filter',
-                style: TextStyle(color: AppTheme.primary, fontWeight: FontWeight.w700)))),
-        ]));
-    }
-
-    // Interleave ad after every 3rd real card
-    final totalItems = _mechanics.length + (_mechanics.length ~/ 3);
-    return ListView.builder(
-      padding: const EdgeInsets.fromLTRB(14, 12, 14, 24),
-      itemCount: totalItems + 1, // +1 for section header
-      itemBuilder: (_, rawIdx) {
-        if (rawIdx == 0) return _buildListHeader();
-        final i = rawIdx - 1;
-        if ((i + 1) % 4 == 0) {
-          return Padding(
-            padding: const EdgeInsets.symmetric(vertical: 6),
-            child: AdBannerWidget(adUnitId: AppConstants.bannerMechanicId));
-        }
-        final mechIdx = i - (i ~/ 4);
-        if (mechIdx >= _mechanics.length) return const SizedBox.shrink();
-        final m = _mechanics[mechIdx];
-        return Padding(
-          padding: const EdgeInsets.only(bottom: 10),
-          child: _MechanicCard(
-            mechanic: m,
-            onTap: () {
-              setState(() => _showMap = true);
-              WidgetsBinding.instance.addPostFrameCallback((_) => _selectMechanic(m));
-            },
-            onCall: () => _callMechanic(m.phone),
+  // ── MECHANICS LIST SHEET ───────────────────────────────────
+  Widget _buildListSheet() {
+    return DraggableScrollableSheet(
+      controller: _sheetCtrl,
+      initialChildSize: 0.32,
+      minChildSize: 0.08,
+      maxChildSize: 0.65,
+      snap: true,
+      snapSizes: const [0.08, 0.32, 0.65],
+      builder: (ctx, scrollCtrl) {
+        return Container(
+          decoration: const BoxDecoration(
+            color: AppTheme.cardBg,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+            boxShadow: [BoxShadow(color: Colors.black38, blurRadius: 20)],
           ),
+          child: Column(children: [
+            // Drag handle
+            Container(
+              margin: const EdgeInsets.symmetric(vertical: 10),
+              width: 36, height: 4,
+              decoration: BoxDecoration(
+                color: AppTheme.cardBorder,
+                borderRadius: BorderRadius.circular(2)),
+            ),
+            // Count
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Row(children: [
+                const Icon(Icons.build_circle_outlined, color: AppTheme.primary, size: 16),
+                const SizedBox(width: 6),
+                Text('${_mechanics.length} mechanics mile',
+                  style: const TextStyle(color: AppTheme.textPrimary,
+                      fontSize: 13, fontWeight: FontWeight.w600)),
+                const Spacer(),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  decoration: BoxDecoration(
+                    color: AppTheme.green.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(8)),
+                  child: Row(mainAxisSize: MainAxisSize.min, children: [
+                    Container(width: 6, height: 6,
+                      decoration: const BoxDecoration(
+                        color: AppTheme.green, shape: BoxShape.circle)),
+                    const SizedBox(width: 5),
+                    Text('${_mechanics.where((m) => m.isOpen).length} available',
+                      style: const TextStyle(color: AppTheme.green, fontSize: 11,
+                          fontWeight: FontWeight.w600)),
+                  ]),
+                ),
+              ]),
+            ),
+            const SizedBox(height: 8),
+            // Cards list
+            Expanded(
+              child: ListView.builder(
+                controller: scrollCtrl,
+                padding: const EdgeInsets.only(left: 12, right: 12, bottom: 16),
+                itemCount: _mechanics.length,
+                itemBuilder: (_, i) => _MechanicCard(
+                  mechanic: _mechanics[i],
+                  isSelected: _selected?.id == _mechanics[i].id,
+                  onTap: () => _selectMechanic(_mechanics[i]),
+                ),
+              ),
+            ),
+          ]),
         );
       },
     );
   }
 
-  Widget _buildListHeader() {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
-      child: Row(children: [
-        const Text('Sorted by distance',
-          style: TextStyle(fontFamily: 'Rajdhani', fontSize: 14,
-              fontWeight: FontWeight.w600, color: AppTheme.textSecondary)),
-        const Spacer(),
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
-          decoration: BoxDecoration(
-            color: AppTheme.primary.withOpacity(0.1),
-            borderRadius: BorderRadius.circular(8),
-            border: Border.all(color: AppTheme.primary.withOpacity(0.25))),
-          child: Text('${_mechanics.length} found',
-            style: const TextStyle(color: AppTheme.primary,
-                fontSize: 11, fontWeight: FontWeight.w700))),
-      ]),
+  // ── DETAIL SHEET ───────────────────────────────────────────
+  Widget _buildDetailSheet() {
+    final m = _selected!;
+    return Positioned(
+      bottom: 0, left: 0, right: 0,
+      child: SlideTransition(
+        position: _detailSlide,
+        child: GestureDetector(
+          onVerticalDragEnd: (d) {
+            if (d.primaryVelocity != null && d.primaryVelocity! > 200) _deselect();
+          },
+          child: Container(
+            decoration: const BoxDecoration(
+              color: AppTheme.cardBg,
+              borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+              boxShadow: [BoxShadow(color: Colors.black54, blurRadius: 24)],
+            ),
+            padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
+            child: Column(mainAxisSize: MainAxisSize.min, children: [
+              // Drag handle
+              Container(width: 36, height: 4,
+                margin: const EdgeInsets.only(bottom: 16),
+                decoration: BoxDecoration(
+                  color: AppTheme.cardBorder, borderRadius: BorderRadius.circular(2))),
+
+              // Header row
+              Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                // Avatar
+                Container(
+                  width: 52, height: 52,
+                  decoration: BoxDecoration(
+                    gradient: AppTheme.primaryGradient,
+                    borderRadius: BorderRadius.circular(14)),
+                  child: const Icon(Icons.build_rounded, color: Colors.white, size: 26),
+                ),
+                const SizedBox(width: 12),
+                Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                  Text(m.shopName,
+                    style: const TextStyle(color: AppTheme.textPrimary,
+                        fontSize: 16, fontWeight: FontWeight.w700)),
+                  const SizedBox(height: 3),
+                  Row(children: [
+                    const Icon(Icons.location_on_rounded, color: AppTheme.textMuted, size: 13),
+                    const SizedBox(width: 3),
+                    Expanded(child: Text(m.shopAddress,
+                      style: const TextStyle(color: AppTheme.textSecondary, fontSize: 12),
+                      maxLines: 1, overflow: TextOverflow.ellipsis)),
+                  ]),
+                  const SizedBox(height: 5),
+                  Row(children: [
+                    // Status badge
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                      decoration: BoxDecoration(
+                        color: (m.isOpen ? AppTheme.green : AppTheme.red).withOpacity(0.15),
+                        borderRadius: BorderRadius.circular(6)),
+                      child: Row(mainAxisSize: MainAxisSize.min, children: [
+                        Container(width: 6, height: 6,
+                          decoration: BoxDecoration(
+                            color: m.isOpen ? AppTheme.green : AppTheme.red,
+                            shape: BoxShape.circle)),
+                        const SizedBox(width: 5),
+                        Text(m.isOpen ? 'Available' : 'Busy',
+                          style: TextStyle(
+                            color: m.isOpen ? AppTheme.green : AppTheme.red,
+                            fontSize: 11, fontWeight: FontWeight.w700)),
+                      ]),
+                    ),
+                    const SizedBox(width: 8),
+                    const Icon(Icons.star_rounded, color: AppTheme.yellow, size: 14),
+                    const SizedBox(width: 3),
+                    Text('${m.ratingAvg.toStringAsFixed(1)}  •  ${m.totalJobs} jobs',
+                      style: const TextStyle(color: AppTheme.textSecondary, fontSize: 12)),
+                    if (m.distanceKm != null) ...[
+                      const SizedBox(width: 8),
+                      Text('${m.distanceKm!.toStringAsFixed(1)} km',
+                        style: const TextStyle(color: AppTheme.cyan, fontSize: 12,
+                            fontWeight: FontWeight.w600)),
+                    ],
+                  ]),
+                ])),
+                // Close
+                GestureDetector(
+                  onTap: _deselect,
+                  child: const Icon(Icons.close_rounded, color: AppTheme.textMuted, size: 22)),
+              ]),
+
+              const SizedBox(height: 14),
+
+              // Specializations
+              if (m.specializations.isNotEmpty)
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: Wrap(spacing: 6, runSpacing: 6,
+                    children: m.specializations.take(5).map((s) => Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                      decoration: BoxDecoration(
+                        color: AppTheme.surfaceHigh,
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: AppTheme.cardBorder)),
+                      child: Text(s, style: const TextStyle(
+                        color: AppTheme.textSecondary, fontSize: 11, fontWeight: FontWeight.w500)),
+                    )).toList()),
+                ),
+
+              const SizedBox(height: 18),
+
+              // Action buttons
+              Row(children: [
+                // Call
+                Expanded(child: GestureDetector(
+                  onTap: () => _call(m.phone),
+                  child: Container(
+                    height: 48,
+                    decoration: BoxDecoration(
+                      color: AppTheme.surfaceHigh,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: AppTheme.cardBorder)),
+                    child: const Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+                      Icon(Icons.call_rounded, color: AppTheme.green, size: 18),
+                      SizedBox(width: 8),
+                      Text('Call', style: TextStyle(color: AppTheme.green,
+                          fontSize: 14, fontWeight: FontWeight.w700)),
+                    ]),
+                  ),
+                )),
+                const SizedBox(width: 10),
+                // Request
+                Expanded(flex: 2, child: GestureDetector(
+                  onTap: () => _requestMechanic(m),
+                  child: Container(
+                    height: 48,
+                    decoration: BoxDecoration(
+                      gradient: AppTheme.primaryGradient,
+                      borderRadius: BorderRadius.circular(12),
+                      boxShadow: [BoxShadow(
+                        color: AppTheme.primary.withOpacity(0.35),
+                        blurRadius: 12, offset: const Offset(0, 4))],
+                    ),
+                    child: const Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+                      Icon(Icons.handyman_rounded, color: Colors.white, size: 18),
+                      SizedBox(width: 8),
+                      Text('Request Mechanic', style: TextStyle(color: Colors.white,
+                          fontSize: 14, fontWeight: FontWeight.w700)),
+                    ]),
+                  ),
+                )),
+              ]),
+            ]),
+          ),
+        ),
+      ),
     );
   }
 
-  // ── Dark tile builder ──────────────────────────────────────
-  Widget _darkTile(BuildContext ctx, Widget tile, TileImage img) {
-    return ColorFiltered(
-      colorFilter: const ColorFilter.matrix([
-        0.80, 0, 0, 0, 0,
-        0, 0.83, 0, 0, 0,
-        0, 0, 0.88, 0, 0,
-        0, 0, 0, 1, 0,
-      ]),
-      child: tile,
-    );
+  // ── FLOATING BUTTONS ───────────────────────────────────────
+  Widget _buildFloatingButtons() {
+    return Column(mainAxisSize: MainAxisSize.min, children: [
+      _FloatBtn(
+        icon: Icons.add_rounded,
+        onTap: () { _mapCtrl.move(_mapCtrl.camera.center,
+            (_mapCtrl.camera.zoom + 1).clamp(5, 18)); },
+        tooltip: 'Zoom in',
+      ),
+      const SizedBox(height: 8),
+      _FloatBtn(
+        icon: Icons.remove_rounded,
+        onTap: () { _mapCtrl.move(_mapCtrl.camera.center,
+            (_mapCtrl.camera.zoom - 1).clamp(5, 18)); },
+        tooltip: 'Zoom out',
+      ),
+      const SizedBox(height: 8),
+      _FloatBtn(
+        icon: Icons.my_location_rounded,
+        onTap: () { if (_locReady) _mapCtrl.move(_userLoc, 15.0); },
+        tooltip: 'My location',
+        accent: true,
+      ),
+    ]);
   }
-}
 
-// ════════════════════════════════════════════════════════════
-// MARKER — Mechanic (blue wrench circle)
-// ════════════════════════════════════════════════════════════
-class _MechanicMarker extends StatelessWidget {
-  final MechanicModel mechanic;
-  final bool selected;
-  final VoidCallback onTap;
-  const _MechanicMarker(
-      {required this.mechanic, required this.selected, required this.onTap});
-
-  @override
-  Widget build(BuildContext context) {
+  // ── SOS BUTTON ─────────────────────────────────────────────
+  Widget _buildSosButton() {
     return GestureDetector(
-      onTap: onTap,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        width: selected ? 56 : 46,
-        height: selected ? 56 : 46,
+      onTap: () { HapticFeedback.heavyImpact(); context.push('/sos'); },
+      child: Container(
+        width: 56, height: 56,
         decoration: BoxDecoration(
+          color: AppTheme.red,
           shape: BoxShape.circle,
-          color: selected ? AppTheme.cyan : const Color(0xFF1565C0),
-          border: Border.all(color: Colors.white, width: selected ? 3 : 2),
           boxShadow: [
-            BoxShadow(
-              color: (selected ? AppTheme.cyan : const Color(0xFF1565C0))
-                  .withOpacity(selected ? 0.6 : 0.4),
-              blurRadius: selected ? 20 : 10,
-              spreadRadius: selected ? 3 : 1),
+            BoxShadow(color: AppTheme.red.withOpacity(0.5),
+                blurRadius: 16, offset: const Offset(0, 4)),
           ],
         ),
-        child: Icon(
-          Icons.build_rounded,
-          color: Colors.white,
-          size: selected ? 24 : 20,
+        child: const Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.sos_rounded, color: Colors.white, size: 22),
+            Text('SOS', style: TextStyle(color: Colors.white,
+                fontSize: 9, fontWeight: FontWeight.w900, letterSpacing: 0.5)),
+          ],
         ),
       ),
     );
   }
 }
 
-// ════════════════════════════════════════════════════════════
-// MARKER — Breakdown location (red car icon)
-// ════════════════════════════════════════════════════════════
-class _BreakdownMarker extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Column(mainAxisSize: MainAxisSize.min, children: [
-      Container(
-        width: 48, height: 48,
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          color: AppTheme.red,
-          border: Border.all(color: Colors.white, width: 2.5),
-          boxShadow: [BoxShadow(
-            color: AppTheme.red.withOpacity(0.55),
-            blurRadius: 16, spreadRadius: 2)]),
-        child: const Icon(Icons.car_repair_rounded, color: Colors.white, size: 24)),
-      // Stem
-      Container(width: 2.5, height: 8,
-        color: AppTheme.red.withOpacity(0.8)),
-      // Shadow dot
-      Container(width: 8, height: 4,
-        decoration: BoxDecoration(
-          color: Colors.black.withOpacity(0.3),
-          borderRadius: BorderRadius.circular(4))),
-    ]);
-  }
-}
+// ── PIN WIDGET ─────────────────────────────────────────────
+class _PinWidget extends StatelessWidget {
+  final Color color;
+  final IconData icon;
+  final String label;
+  final bool isSelected;
 
-// ════════════════════════════════════════════════════════════
-// BOTTOM SHEET — Mechanic detail (Uber-style)
-// ════════════════════════════════════════════════════════════
-class _MechanicDetailSheet extends StatelessWidget {
-  final MechanicModel mechanic;
-  final VoidCallback onClose, onCall, onRequest;
-  const _MechanicDetailSheet({
-    required this.mechanic,
-    required this.onClose,
-    required this.onCall,
-    required this.onRequest,
+  const _PinWidget({
+    required this.color,
+    required this.icon,
+    required this.label,
+    required this.isSelected,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.fromLTRB(10, 0, 10, 10),
-      decoration: BoxDecoration(
-        color: AppTheme.cardBg,
-        borderRadius: BorderRadius.circular(AppTheme.r20),
-        border: Border.all(color: AppTheme.cardBorder),
-        boxShadow: [BoxShadow(
-          color: Colors.black.withOpacity(0.5),
-          blurRadius: 28, offset: const Offset(0, -4))],
-      ),
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
-        child: Column(mainAxisSize: MainAxisSize.min, children: [
-          // Handle + close
-          Row(children: [
-            const Spacer(),
-            Container(width: 36, height: 4,
-              decoration: BoxDecoration(
-                color: AppTheme.cardBorder, borderRadius: BorderRadius.circular(2))),
-            const Spacer(),
-            GestureDetector(onTap: onClose,
-              child: const Icon(Icons.close_rounded,
-                  color: AppTheme.textMuted, size: 20)),
-          ]),
-          const SizedBox(height: 12),
-
-          // Header row
-          Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Container(
-              width: 52, height: 52,
-              decoration: BoxDecoration(
-                color: const Color(0xFF0D3366),
-                borderRadius: BorderRadius.circular(14),
-                border: Border.all(color: const Color(0xFF1565C0).withOpacity(0.5))),
-              child: const Icon(Icons.build_rounded,
-                  color: Color(0xFF4DB6FF), size: 26)),
-            const SizedBox(width: 12),
-            Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(children: [
-                  Expanded(child: Text(mechanic.shopName,
-                    style: const TextStyle(fontFamily: 'Rajdhani', fontSize: 18,
-                        fontWeight: FontWeight.w700, color: AppTheme.textPrimary))),
-                  if (mechanic.isVerified)
-                    const Icon(Icons.verified_rounded, color: AppTheme.cyan, size: 16),
-                ]),
-                const SizedBox(height: 3),
-                Text(mechanic.shopAddress,
-                  style: const TextStyle(color: AppTheme.textMuted, fontSize: 12),
-                  maxLines: 1, overflow: TextOverflow.ellipsis),
-              ])),
-          ]),
-
-          const SizedBox(height: 14),
-
-          // Stats row
-          Row(children: [
-            _Stat(
-              icon: Icons.star_rounded, color: AppTheme.yellow,
-              value: mechanic.ratingAvg.toStringAsFixed(1),
-              label: 'Rating'),
-            const SizedBox(width: 10),
-            if (mechanic.distanceKm != null)
-              _Stat(
-                icon: Icons.near_me_rounded, color: AppTheme.cyan,
-                value: '${mechanic.distanceKm!.toStringAsFixed(1)} km',
-                label: 'Distance'),
-            const SizedBox(width: 10),
-            _Stat(
-              icon: mechanic.isOpen
-                  ? Icons.check_circle_rounded : Icons.cancel_rounded,
-              color: mechanic.isOpen ? AppTheme.green : AppTheme.red,
-              value: mechanic.isOpen ? 'Open' : 'Closed',
-              label: 'Status'),
-            const SizedBox(width: 10),
-            _Stat(
-              icon: Icons.work_history_rounded, color: AppTheme.primary,
-              value: '${mechanic.totalJobs}+',
-              label: 'Jobs'),
-          ]),
-
-          // Specializations
-          if (mechanic.specializations.isNotEmpty) ...[
-            const SizedBox(height: 12),
-            Wrap(spacing: 6, runSpacing: 6,
-              children: mechanic.specializations.map((s) => Container(
-                padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
-                decoration: BoxDecoration(
-                  color: AppTheme.surfaceHigh,
-                  borderRadius: BorderRadius.circular(6),
-                  border: Border.all(color: AppTheme.cardBorder)),
-                child: Text(s, style: const TextStyle(
-                    color: AppTheme.textSecondary, fontSize: 11)),
-              )).toList()),
-          ],
-
-          const SizedBox(height: 16),
-          const Divider(color: AppTheme.cardBorder, height: 1),
-          const SizedBox(height: 14),
-
-          // Action buttons
-          Row(children: [
-            // Call
-            Expanded(
-              child: Pressable(
-                onTap: onCall,
-                child: Container(
-                  height: 48,
-                  decoration: BoxDecoration(
-                    color: AppTheme.green.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(AppTheme.r14),
-                    border: Border.all(color: AppTheme.green.withOpacity(0.3))),
-                  child: const Row(mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(Icons.phone_rounded, color: AppTheme.green, size: 18),
-                      SizedBox(width: 7),
-                      Text('Call', style: TextStyle(color: AppTheme.green,
-                          fontWeight: FontWeight.w700, fontSize: 15)),
-                    ])),
-              ),
-            ),
-            const SizedBox(width: 10),
-            // Request assistance
-            Expanded(flex: 2,
-              child: GlowButton(
-                label: 'Request Assistance',
-                icon: Icons.emergency_rounded,
-                height: 48, fontSize: 15, radius: AppTheme.r14,
-                onTap: onRequest,
-              )),
-          ]),
-        ]),
-      ),
-    );
-  }
-}
-
-// ── Stat pill ──────────────────────────────────────────────
-class _Stat extends StatelessWidget {
-  final IconData icon;
-  final Color color;
-  final String value, label;
-  const _Stat({required this.icon, required this.color,
-    required this.value, required this.label});
-
-  @override
-  Widget build(BuildContext context) => Expanded(child: Container(
-    padding: const EdgeInsets.symmetric(vertical: 8),
-    decoration: BoxDecoration(
-      color: color.withOpacity(0.08),
-      borderRadius: BorderRadius.circular(10),
-      border: Border.all(color: color.withOpacity(0.2))),
-    child: Column(children: [
-      Icon(icon, color: color, size: 16),
-      const SizedBox(height: 4),
-      Text(value, style: TextStyle(color: color,
-          fontWeight: FontWeight.w700, fontSize: 12)),
-      Text(label, style: const TextStyle(
-          color: AppTheme.textMuted, fontSize: 9)),
-    ]),
-  ));
-}
-
-// ════════════════════════════════════════════════════════════
-// COMPACT CHIP — horizontal strip below map
-// ════════════════════════════════════════════════════════════
-class _MechanicChip extends StatelessWidget {
-  final MechanicModel mechanic;
-  final VoidCallback onTap;
-  const _MechanicChip({required this.mechanic, required this.onTap});
-
-  @override
-  Widget build(BuildContext context) {
-    return Pressable(
-      onTap: onTap,
-      child: Container(
-        width: 190,
-        margin: const EdgeInsets.only(right: 10),
-        padding: const EdgeInsets.all(12),
+    return Column(mainAxisSize: MainAxisSize.min, children: [
+      if (isSelected)
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+          margin: const EdgeInsets.only(bottom: 3),
+          decoration: BoxDecoration(
+            color: AppTheme.cardBg,
+            borderRadius: BorderRadius.circular(6),
+            border: Border.all(color: color.withOpacity(0.4))),
+          child: Text(label,
+            style: const TextStyle(color: AppTheme.textPrimary,
+                fontSize: 9, fontWeight: FontWeight.w700),
+            maxLines: 1, overflow: TextOverflow.ellipsis),
+        ),
+      Container(
+        width: isSelected ? 38 : 32,
+        height: isSelected ? 38 : 32,
         decoration: BoxDecoration(
-          color: AppTheme.cardBg,
-          borderRadius: BorderRadius.circular(AppTheme.r14),
-          border: Border.all(color: AppTheme.cardBorder)),
-        child: Row(children: [
-          Container(width: 36, height: 36,
-            decoration: BoxDecoration(
-              color: const Color(0xFF0D3366),
-              borderRadius: BorderRadius.circular(10)),
-            child: const Icon(Icons.build_rounded,
-                color: Color(0xFF4DB6FF), size: 18)),
-          const SizedBox(width: 9),
-          Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text(mechanic.shopName,
-                style: const TextStyle(color: AppTheme.textPrimary,
-                    fontWeight: FontWeight.w700, fontSize: 12),
-                maxLines: 1, overflow: TextOverflow.ellipsis),
-              const SizedBox(height: 3),
-              Row(children: [
-                const Icon(Icons.star_rounded, color: AppTheme.yellow, size: 11),
-                const SizedBox(width: 3),
-                Text(mechanic.ratingAvg.toStringAsFixed(1),
-                  style: const TextStyle(color: AppTheme.yellow,
-                      fontSize: 11, fontWeight: FontWeight.w700)),
-                if (mechanic.distanceKm != null) ...[
-                  const SizedBox(width: 6),
-                  Text('${mechanic.distanceKm!.toStringAsFixed(1)} km',
-                    style: const TextStyle(
-                        color: AppTheme.textMuted, fontSize: 10)),
-                ],
-              ]),
-            ])),
-        ]),
+          color: color,
+          shape: BoxShape.circle,
+          border: Border.all(color: Colors.white, width: isSelected ? 2.5 : 2),
+          boxShadow: [BoxShadow(color: color.withOpacity(0.4),
+              blurRadius: isSelected ? 12 : 6)],
+        ),
+        child: Icon(icon, color: Colors.white, size: isSelected ? 18 : 15),
       ),
-    );
+      // Pin tail
+      CustomPaint(
+        size: const Size(10, 6),
+        painter: _PinTailPainter(color: color),
+      ),
+    ]);
   }
 }
 
-// ════════════════════════════════════════════════════════════
-// FULL LIST CARD — list view
-// ════════════════════════════════════════════════════════════
+class _PinTailPainter extends CustomPainter {
+  final Color color;
+  const _PinTailPainter({required this.color});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()..color = color;
+    final path = Path()
+      ..moveTo(0, 0)
+      ..lineTo(size.width / 2, size.height)
+      ..lineTo(size.width, 0)
+      ..close();
+    canvas.drawPath(path, paint);
+  }
+
+  @override
+  bool shouldRepaint(covariant _PinTailPainter old) => old.color != color;
+}
+
+// ── MECHANIC CARD ──────────────────────────────────────────
 class _MechanicCard extends StatelessWidget {
   final MechanicModel mechanic;
-  final VoidCallback onTap, onCall;
-  const _MechanicCard(
-      {required this.mechanic, required this.onTap, required this.onCall});
+  final bool isSelected;
+  final VoidCallback onTap;
+
+  const _MechanicCard({
+    required this.mechanic,
+    required this.isSelected,
+    required this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return Pressable(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.all(14),
-        decoration: BoxDecoration(
-          color: AppTheme.cardBg,
-          borderRadius: BorderRadius.circular(AppTheme.r14),
-          border: Border.all(color: AppTheme.cardBorder),
-        ),
-        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Row(children: [
-            Container(
-              width: 46, height: 46,
-              decoration: BoxDecoration(
-                color: const Color(0xFF0D3366),
-                borderRadius: BorderRadius.circular(13),
-                border: Border.all(
-                    color: const Color(0xFF1565C0).withOpacity(0.4))),
-              child: const Icon(Icons.build_rounded,
-                  color: Color(0xFF4DB6FF), size: 22)),
-            const SizedBox(width: 12),
-            Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(children: [
-                  Expanded(child: Text(mechanic.shopName,
-                    style: const TextStyle(color: AppTheme.textPrimary,
-                        fontWeight: FontWeight.w700, fontSize: 15))),
-                  if (mechanic.isVerified)
-                    const Padding(padding: EdgeInsets.only(left: 4),
-                      child: Icon(Icons.verified_rounded,
-                          color: AppTheme.cyan, size: 15)),
-                  if (mechanic.subscriptionTier == 'pro')
-                    Container(
-                      margin: const EdgeInsets.only(left: 5),
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 5, vertical: 1),
-                      decoration: BoxDecoration(
-                        color: AppTheme.yellow.withOpacity(0.12),
-                        borderRadius: BorderRadius.circular(4)),
-                      child: const Text('PRO', style: TextStyle(
-                          color: AppTheme.yellow, fontSize: 9,
-                          fontWeight: FontWeight.w800))),
-                ]),
-                const SizedBox(height: 2),
-                Text(mechanic.shopAddress,
-                  style: const TextStyle(color: AppTheme.textMuted, fontSize: 11),
-                  maxLines: 1, overflow: TextOverflow.ellipsis),
-              ])),
-          ]),
-
-          const SizedBox(height: 12),
-
-          Row(children: [
-            // Rating
-            _Badge(icon: Icons.star_rounded, color: AppTheme.yellow,
-                text: mechanic.ratingAvg.toStringAsFixed(1)),
-            const SizedBox(width: 7),
-            // Distance
-            if (mechanic.distanceKm != null)
-              _Badge(icon: Icons.near_me_rounded, color: AppTheme.cyan,
-                  text: '${mechanic.distanceKm!.toStringAsFixed(1)} km'),
-            const SizedBox(width: 7),
-            // Open/Closed
-            _Badge(
-              icon: mechanic.isOpen
-                  ? Icons.check_circle_outline_rounded
-                  : Icons.cancel_outlined,
-              color: mechanic.isOpen ? AppTheme.green : AppTheme.red,
-              text: mechanic.isOpen ? 'Open' : 'Closed'),
-            const Spacer(),
-            // Call button
-            Pressable(
-              onTap: onCall,
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
-                decoration: BoxDecoration(
-                  color: AppTheme.green.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(AppTheme.r12),
-                  border: Border.all(color: AppTheme.green.withOpacity(0.3))),
-                child: const Row(mainAxisSize: MainAxisSize.min, children: [
-                  Icon(Icons.phone_rounded, color: AppTheme.green, size: 14),
-                  SizedBox(width: 5),
-                  Text('Call', style: TextStyle(color: AppTheme.green,
-                      fontSize: 12, fontWeight: FontWeight.w700)),
-                ]))),
-          ]),
-
-          if (mechanic.specializations.isNotEmpty) ...[
-            const SizedBox(height: 10),
-            Wrap(spacing: 6, runSpacing: 4,
-              children: mechanic.specializations.take(4).map((s) => Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                decoration: BoxDecoration(
-                  color: AppTheme.surfaceHigh,
-                  borderRadius: BorderRadius.circular(5)),
-                child: Text(s, style: const TextStyle(
-                    color: AppTheme.textMuted, fontSize: 10)),
-              )).toList()),
-          ],
-        ]),
-      ),
-    );
-  }
-}
-
-// ── Small badge pill ───────────────────────────────────────
-class _Badge extends StatelessWidget {
-  final IconData icon;
-  final Color color;
-  final String text;
-  const _Badge({required this.icon, required this.color, required this.text});
-
-  @override
-  Widget build(BuildContext context) => Container(
-    padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 4),
-    decoration: BoxDecoration(
-      color: color.withOpacity(0.1),
-      borderRadius: BorderRadius.circular(6),
-      border: Border.all(color: color.withOpacity(0.2))),
-    child: Row(mainAxisSize: MainAxisSize.min, children: [
-      Icon(icon, color: color, size: 12),
-      const SizedBox(width: 3),
-      Text(text, style: TextStyle(color: color,
-          fontSize: 11, fontWeight: FontWeight.w600)),
-    ]));
-}
-
-// ── Map/List toggle button ─────────────────────────────────
-class _ToggleBtn extends StatelessWidget {
-  final String label;
-  final IconData icon;
-  final bool active;
-  final VoidCallback onTap;
-  const _ToggleBtn({required this.label, required this.icon,
-    required this.active, required this.onTap});
-
-  @override
-  Widget build(BuildContext context) => Expanded(
-    child: GestureDetector(
+    final m = mechanic;
+    return GestureDetector(
       onTap: onTap,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
+        margin: const EdgeInsets.only(bottom: 8),
+        padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: active ? AppTheme.primary : Colors.transparent,
-          borderRadius: BorderRadius.circular(9)),
-        child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-          Icon(icon, size: 14,
-            color: active ? Colors.white : AppTheme.textMuted),
-          const SizedBox(width: 5),
-          Text(label, style: TextStyle(
-            fontSize: 12, fontWeight: FontWeight.w600,
-            color: active ? Colors.white : AppTheme.textMuted)),
+          color: isSelected ? AppTheme.surfaceHigh : AppTheme.cardBg,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(
+            color: isSelected ? AppTheme.primary : AppTheme.cardBorder,
+            width: isSelected ? 1.5 : 1,
+          ),
+        ),
+        child: Row(children: [
+          // Status dot + icon
+          Container(
+            width: 44, height: 44,
+            decoration: BoxDecoration(
+              color: (m.isOpen ? AppTheme.green : AppTheme.red).withOpacity(0.12),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: (m.isOpen ? AppTheme.green : AppTheme.red).withOpacity(0.3)),
+            ),
+            child: Icon(Icons.build_rounded,
+              color: m.isOpen ? AppTheme.green : AppTheme.red, size: 20),
+          ),
+          const SizedBox(width: 12),
+          // Info
+          Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Text(m.shopName,
+              style: const TextStyle(color: AppTheme.textPrimary,
+                  fontSize: 13, fontWeight: FontWeight.w700),
+              maxLines: 1, overflow: TextOverflow.ellipsis),
+            const SizedBox(height: 3),
+            Row(children: [
+              const Icon(Icons.star_rounded, color: AppTheme.yellow, size: 12),
+              const SizedBox(width: 3),
+              Text('${m.ratingAvg.toStringAsFixed(1)}',
+                style: const TextStyle(color: AppTheme.textSecondary, fontSize: 11)),
+              const SizedBox(width: 6),
+              Expanded(child: Text(
+                m.specializations.take(2).join(' • '),
+                style: const TextStyle(color: AppTheme.textMuted, fontSize: 11),
+                maxLines: 1, overflow: TextOverflow.ellipsis)),
+            ]),
+          ])),
+          // Right: distance + status
+          Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
+            if (m.distanceKm != null)
+              Text('${m.distanceKm!.toStringAsFixed(1)} km',
+                style: const TextStyle(color: AppTheme.cyan,
+                    fontSize: 12, fontWeight: FontWeight.w700)),
+            const SizedBox(height: 4),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+              decoration: BoxDecoration(
+                color: (m.isOpen ? AppTheme.green : AppTheme.red).withOpacity(0.12),
+                borderRadius: BorderRadius.circular(6)),
+              child: Text(m.isOpen ? '● Open' : '● Busy',
+                style: TextStyle(
+                  color: m.isOpen ? AppTheme.green : AppTheme.red,
+                  fontSize: 10, fontWeight: FontWeight.w700)),
+            ),
+          ]),
         ]),
       ),
+    );
+  }
+}
+
+// ── FLOATING BUTTON ────────────────────────────────────────
+class _FloatBtn extends StatelessWidget {
+  final IconData icon;
+  final VoidCallback onTap;
+  final String tooltip;
+  final bool accent;
+
+  const _FloatBtn({
+    required this.icon,
+    required this.onTap,
+    required this.tooltip,
+    this.accent = false,
+  });
+
+  @override
+  Widget build(BuildContext context) => GestureDetector(
+    onTap: onTap,
+    child: Container(
+      width: 42, height: 42,
+      decoration: BoxDecoration(
+        color: accent ? AppTheme.primary : AppTheme.cardBg,
+        shape: BoxShape.circle,
+        border: Border.all(color: AppTheme.cardBorder),
+        boxShadow: const [BoxShadow(color: Colors.black38, blurRadius: 8)],
+      ),
+      child: Icon(icon,
+        color: accent ? Colors.white : AppTheme.textPrimary, size: 18),
     ),
   );
 }
