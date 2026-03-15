@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'services/api_service.dart';
+import 'firebase_options.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'services/ad_service.dart';
 import 'package:flutter/services.dart';
@@ -43,7 +44,9 @@ void main() async {
   // Previously these ran sequentially, blocking the UI for ~3-5 seconds
   // before runApp() was even called.
   await Future.wait([
-    Firebase.initializeApp(),
+    Firebase.initializeApp(
+  options: DefaultFirebaseOptions.currentPlatform,
+),
     ApiService().loadToken(),
     LanguageService().loadSavedLanguage(),
   ]);
