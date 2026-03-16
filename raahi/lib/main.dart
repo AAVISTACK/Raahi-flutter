@@ -46,7 +46,8 @@ void main() async {
   await Firebase.initializeApp();
   ApiService().init(); // init Dio immediately — token loaded in background
 
-  await SystemChrome.setPreferredOrientations([
+  // Non-blocking — doesn't delay startup
+  SystemChrome.setPreferredOrientations([
     DeviceOrientation.portraitUp,
     DeviceOrientation.portraitDown,
   ]);

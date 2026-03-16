@@ -5,7 +5,6 @@
 // ============================================================
 import 'dart:async';
 import 'dart:convert';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
 import 'package:speech_to_text/speech_to_text.dart';
@@ -177,24 +176,7 @@ class _AiMechanicScreenState extends State<AiMechanicScreen>
       _transCtrl.reverse();
 
       try {
-        // Check if user has a valid auth token
-        final user = FirebaseAuth.instance.currentUser;
-        final authToken = await user?.getIdToken();
-
-        String reply;
-        if (authToken == null || authToken.isEmpty) {
-          // No token — call Gemini directly
-          reply = await _callGeminiDirect(text);
-        } else {
-          // Has token — use backend with Gemini fallback
-          reply = await ApiService().sendAiMessageWithFallback(
-            sessionId: _sessionId,
-            message: text,
-            history: [],
-            vehicleType: 'car',
-            languageCode: _lang.currentCode,
-          );
-        }
+        final reply = await _callBackend(text);
 
         // Parse response into structured result
         final result = _DiagResult(
@@ -224,33 +206,58 @@ class _AiMechanicScreenState extends State<AiMechanicScreen>
       }
     }
 
-    // ── Direct Gemini call (no auth required) ─────────────────
+    // ── Backend call with Gemini fallback ─────────────────────
+    Future<String> _callBackend(String message) async {
+      try {
+        final response = await http.post(
+          Uri.parse('https://web-production-e6c90c.up.railway.app/api/v1/ai/chat'),
+          headers: {'Content-Type': 'application/json'},
+          body: jsonEncode({
+            'message': message,
+            'language': 'hi',
+          }),
+        ).timeout(const Duration(seconds: 30));
+
+        if (response.statusCode == 200) {
+          final data = jsonDecode(response.body) as Map<String, dynamic>;
+          return data['reply'] as String? ?? 'कोई जवाब नहीं मिला';
+        }
+        // Non-200 — fall through to Gemini
+        return await _callGeminiDirect(message);
+      } catch (e) {
+        // Timeout / network error — fall through to Gemini
+        return await _callGeminiDirect(message);
+      }
+    }
+
+    // ── Direct Gemini fallback ─────────────────────────────────
     Future<String> _callGeminiDirect(String message) async {
-      const geminiUrl =
-          'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent'
-          '?key=AIzaSyC0hmuQibdcPsQStTyofhhHw86HWs4ZD7k';
       final response = await http.post(
-        Uri.parse(geminiUrl),
+        Uri.parse(
+          'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent'
+          '?key=AIzaSyC0hmuQibdcPsQStTyofhhHw86HWs4ZD7k',
+        ),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({
           'contents': [
             {
               'parts': [
                 {
-                  'text':
-                      'You are Raahi AI mechanic. User says: $message. Give helpful car advice in Hindi.'
+                  'text': 'You are Raahi AI mechanic. Answer in Hindi. User says: $message'
                 }
               ]
             }
           ],
         }),
-      );
-      if (response.statusCode != 200) {
-        throw Exception('Gemini error: ${response.statusCode}');
+      ).timeout(const Duration(seconds: 30));
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body) as Map<String, dynamic>;
+        return data['candidates'][0]['content']['parts'][0]['text'] as String;
       }
-      final data = jsonDecode(response.body) as Map<String, dynamic>;
-      return data['candidates'][0]['content']['parts'][0]['text'] as String;
+      throw Exception('Both services failed: ${response.statusCode}');
     }
+
   
   String? _extractSection(String text, String key) {
     final lines = text.split('\n');

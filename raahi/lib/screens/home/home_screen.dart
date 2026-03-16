@@ -209,14 +209,16 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       color: AppTheme.bg,
       padding: const EdgeInsets.fromLTRB(16, 18, 16, 0),
       child: Row(children: [
-        Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Text(_lang.t('greeting'),
-            style: const TextStyle(color: AppTheme.textMuted, fontSize: 12)),
-          const SizedBox(height: 1),
-          const Text('RAAHI',
-            style: TextStyle(fontFamily: 'Rajdhani', fontSize: 26,
-              fontWeight: FontWeight.w800, color: AppTheme.textPrimary, letterSpacing: 2)),
-        ]),
+        Row(children: [
+            const Icon(Icons.directions_car, color: Color(0xFFFF6B35), size: 26),
+            const SizedBox(width: 8),
+            const Text('Raahi', style: TextStyle(
+              color: Colors.white,
+              fontSize: 22,
+              fontWeight: FontWeight.bold,
+              letterSpacing: 2,
+              fontFamily: 'Rajdhani')),
+          ]),
         const Spacer(),
         Pressable(onTap: _showLanguagePicker,
           child: Container(

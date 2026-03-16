@@ -199,7 +199,7 @@ class _MechanicsMapScreenState extends State<MechanicsMapScreen>
         // ── SOS BUTTON (bottom-left) ─────────────────────────
         Positioned(
           left: 16,
-          bottom: 120,
+          bottom: _selected != null ? 280 : 120,
           child: _buildSosButton(),
         ),
 
@@ -677,10 +677,13 @@ class _PinWidget extends StatelessWidget {
             color: AppTheme.cardBg,
             borderRadius: BorderRadius.circular(6),
             border: Border.all(color: color.withOpacity(0.4))),
-          child: Text(label,
-            style: const TextStyle(color: AppTheme.textPrimary,
-                fontSize: 9, fontWeight: FontWeight.w700),
-            maxLines: 1, overflow: TextOverflow.ellipsis),
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 110),
+            child: Text(label,
+              style: const TextStyle(color: AppTheme.textPrimary,
+                  fontSize: 9, fontWeight: FontWeight.w700),
+              maxLines: 1, overflow: TextOverflow.ellipsis),
+          ),
         ),
       Container(
         width: isSelected ? 38 : 32,
