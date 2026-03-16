@@ -19,6 +19,7 @@
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher"
         android:roundIcon="@mipmap/ic_launcher"
+        android:theme="@style/NormalTheme"
         android:usesCleartextTraffic="true"
         android:requestLegacyExternalStorage="true">
 

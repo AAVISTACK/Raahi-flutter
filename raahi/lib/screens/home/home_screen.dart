@@ -614,10 +614,12 @@ class _QuickActionCard extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Text(item.label, style: const TextStyle(color: AppTheme.textPrimary,
+              Text(item.label, maxLines: 1, overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(color: AppTheme.textPrimary,
                   fontWeight: FontWeight.w700, fontSize: 13)),
               const SizedBox(height: 2),
-              Text(item.sub, style: const TextStyle(
+              Text(item.sub, maxLines: 2, overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
                   color: AppTheme.textMuted, fontSize: 11)),
             ])),
         ]),
@@ -656,10 +658,12 @@ class _DailyCard extends StatelessWidget {
                   shape: BoxShape.circle, color: AppTheme.red))),
         ]),
         const SizedBox(height: 8),
-        Text(title, style: const TextStyle(color: AppTheme.textPrimary,
+        Text(title, maxLines: 1, overflow: TextOverflow.ellipsis,
+            style: const TextStyle(color: AppTheme.textPrimary,
             fontWeight: FontWeight.w700, fontSize: 13)),
         const SizedBox(height: 2),
-        Text(sub, style: const TextStyle(color: AppTheme.textMuted, fontSize: 11)),
+        Text(sub, maxLines: 2, overflow: TextOverflow.ellipsis,
+            style: const TextStyle(color: AppTheme.textMuted, fontSize: 11)),
         const SizedBox(height: 8),
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),

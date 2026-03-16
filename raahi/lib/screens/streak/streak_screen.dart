@@ -42,7 +42,10 @@ class _StreakScreenState extends State<StreakScreen>
       final res = await _api.get('/daily/streak');
       setState(() { _streakData = res; _loading = false; });
     } catch (_) {
-      setState(() => _loading = false);
+      setState(() {
+        _streakData = {'streak': 0, 'checkedInToday': false, 'longest': 0};
+        _loading = false;
+      });
     }
   }
 

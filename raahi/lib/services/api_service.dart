@@ -154,16 +154,82 @@ class ApiService {
     required String message,
     required List<Map<String, String>> history,
     required String vehicleType,
-    String languageCode = 'hi',   // ← NEW: 'hi','pa','ta','te','bn','en'
+    String languageCode = 'hi',
   }) async {
     final res = await _dio.post('/ai/chat', data: {
       'session_id': sessionId,
       'message': message,
       'history': history,
       'vehicle_type': vehicleType,
-      'language': languageCode,  // ← Backend AI replies in this language
+      'language': languageCode,
     });
     return res.data['reply'] as String;
+  }
+
+  /// Backend se fail hone par direct Gemini API call karta hai
+  Future<String> sendAiMessageWithFallback({
+    required String sessionId,
+    required String message,
+    required List<Map<String, String>> history,
+    required String vehicleType,
+    String languageCode = 'hi',
+  }) async {
+    try {
+      return await sendAiMessage(
+        sessionId: sessionId,
+        message: message,
+        history: history,
+        vehicleType: vehicleType,
+        languageCode: languageCode,
+      );
+    } catch (_) {
+      return await _sendAiMessageDirect(
+          message: message, languageCode: languageCode);
+    }
+  }
+
+  Future<String> _sendAiMessageDirect({
+    required String message,
+    String languageCode = 'hi',
+  }) async {
+    final langName = _langDisplayName(languageCode);
+    final prompt =
+        'You are Raahi Bhaiya, an expert Indian roadside assistance AI mechanic. '
+        'Reply ONLY in $langName. '
+        'User vehicle problem: $message\n\n'
+        'Provide:\n'
+        '**Possible Issue:** (one clear line)\n'
+        '**Urgency:** low / medium / high\n'
+        '**Suggested Action:** (2-3 practical steps for Indian roads)\n'
+        'Keep it simple, warm, and helpful.';
+
+    final geminiDio = Dio();
+    final res = await geminiDio.post(
+      'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent',
+      queryParameters: {'key': AppConstants.geminiKey},
+      data: {
+        'contents': [
+          {
+            'parts': [
+              {'text': prompt}
+            ]
+          }
+        ],
+        'generationConfig': {'temperature': 0.7, 'maxOutputTokens': 400},
+      },
+    );
+    return res.data['candidates'][0]['content']['parts'][0]['text'] as String;
+  }
+
+  String _langDisplayName(String code) {
+    switch (code) {
+      case 'hi': return 'Hindi (Devanagari script)';
+      case 'pa': return 'Punjabi (Gurmukhi script)';
+      case 'ta': return 'Tamil';
+      case 'te': return 'Telugu';
+      case 'bn': return 'Bengali';
+      default:   return 'English';
+    }
   }
 
 

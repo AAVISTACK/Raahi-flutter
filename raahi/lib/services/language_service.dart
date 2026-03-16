@@ -82,7 +82,7 @@ class TranslationMap {
     },
     'available_on': {
       'en': 'You are Available — Ready to Help',
-      'hi': 'आप Available हैं — Help के लिए Ready',
+      'hi': 'आप उपलब्ध हैं — मदद के लिए तैयार',
       'pa': 'ਤੁਸੀਂ ਉਪਲਬਧ ਹੋ — ਮਦਦ ਲਈ ਤਿਆਰ',
       'ta': 'நீங்கள் கிடைக்கிறீர்கள் — உதவ தயார்',
       'te': 'మీరు అందుబాటులో ఉన్నారు — సహాయానికి సిద్ధం',
@@ -90,7 +90,7 @@ class TranslationMap {
     },
     'available_off': {
       'en': 'Offline — No notifications',
-      'hi': 'Offline — कोई Notify नहीं होगा',
+      'hi': 'ऑफलाइन — कोई सूचना नहीं होगी',
       'pa': 'ਆਫਲਾਈਨ — ਕੋਈ ਸੂਚਨਾ ਨਹੀਂ',
       'ta': 'ஆஃப்லைன் — அறிவிப்பு இல்லை',
       'te': 'ఆఫ్‌లైన్ — నోటిఫికేషన్ లేదు',
@@ -108,7 +108,7 @@ class TranslationMap {
     },
     'sos_sub': {
       'en': 'Press for instant help',
-      'hi': 'Press करके turant madad pao',
+      'hi': 'दबाएँ और तुरंत मदद पाएँ',
       'pa': 'ਤੁਰੰਤ ਮਦਦ ਲਈ ਦਬਾਓ',
       'ta': 'உடனடி உதவிக்கு அழுத்துங்கள்',
       'te': 'తక్షణ సహాయం కోసం నొక్కండి',
@@ -118,7 +118,7 @@ class TranslationMap {
     // ── Action Cards ─────────────────────────────────────
     'request_help': {
       'en': 'Request Help',
-      'hi': 'Madad Maango',
+      'hi': 'मदद माँगो',
       'pa': 'ਮਦਦ ਮੰਗੋ',
       'ta': 'உதவி கேளுங்கள்',
       'te': 'సహాయం అడగండి',
@@ -126,7 +126,7 @@ class TranslationMap {
     },
     'find_mechanic': {
       'en': 'Find Mechanic',
-      'hi': 'Mechanic Dhundo',
+      'hi': 'मैकेनिक ढूँढो',
       'pa': 'ਮਕੈਨਿਕ ਲੱਭੋ',
       'ta': 'மெக்கானிக் தேடுங்கள்',
       'te': 'మెకానిక్ వెతకండి',
@@ -134,7 +134,7 @@ class TranslationMap {
     },
     'ai_assistant': {
       'en': 'AI Assistant',
-      'hi': 'AI Sahayak',
+      'hi': 'AI सहायक',
       'pa': 'AI ਸਹਾਇਕ',
       'ta': 'AI உதவியாளர்',
       'te': 'AI సహాయకుడు',
@@ -142,7 +142,7 @@ class TranslationMap {
     },
     'my_jobs': {
       'en': 'My Jobs',
-      'hi': 'Mere Jobs',
+      'hi': 'मेरे काम',
       'pa': 'ਮੇਰੀਆਂ ਨੌਕਰੀਆਂ',
       'ta': 'என் வேலைகள்',
       'te': 'నా జాబ్స్',
@@ -152,7 +152,7 @@ class TranslationMap {
     // ── Buttons ──────────────────────────────────────────
     'btn_send_otp': {
       'en': 'Send OTP 📱',
-      'hi': 'OTP Bhejo 📱',
+      'hi': 'OTP भेजो 📱',
       'pa': 'OTP ਭੇਜੋ 📱',
       'ta': 'OTP அனுப்பு 📱',
       'te': 'OTP పంపండి 📱',
@@ -160,7 +160,7 @@ class TranslationMap {
     },
     'btn_verify': {
       'en': 'Verify ✓',
-      'hi': 'Verify Karo ✓',
+      'hi': 'सत्यापित करें ✓',
       'pa': 'ਤਸਦੀਕ ਕਰੋ ✓',
       'ta': 'சரிபார்க்கவும் ✓',
       'te': 'ధృవీకరించండి ✓',
@@ -168,7 +168,7 @@ class TranslationMap {
     },
     'btn_get_help': {
       'en': 'Notify Nearby Drivers!',
-      'hi': 'Nearby Drivers Ko Notify Karo!',
+      'hi': 'पास के ड्राइवरों को सूचित करो!',
       'pa': 'ਨੇੜੇ ਡਰਾਈਵਰਾਂ ਨੂੰ ਸੂਚਿਤ ਕਰੋ!',
       'ta': 'அருகிலுள்ள ஓட்டுநர்களுக்கு அறிவிக்கவும்!',
       'te': 'దగ్గరిలోని డ్రైవర్లకు నోటిఫై చేయండి!',
@@ -176,7 +176,7 @@ class TranslationMap {
     },
     'btn_accept_help': {
       'en': 'Yes, I will Help! 🤝',
-      'hi': 'Haan, Help Karunga! 🤝',
+      'hi': 'हाँ, मदद करूँगा! 🤝',
       'pa': 'ਹਾਂ, ਮਦਦ ਕਰਾਂਗਾ! 🤝',
       'ta': 'ஆம், உதவுவேன்! 🤝',
       'te': 'అవును, సహాయం చేస్తాను! 🤝',
@@ -184,7 +184,7 @@ class TranslationMap {
     },
     'btn_complete': {
       'en': 'Job Complete ✓',
-      'hi': 'Job Complete Hai ✓',
+      'hi': 'काम पूरा हुआ ✓',
       'pa': 'ਕੰਮ ਮੁਕੰਮਲ ✓',
       'ta': 'வேலை முடிந்தது ✓',
       'te': 'పని పూర్తైంది ✓',
@@ -192,7 +192,7 @@ class TranslationMap {
     },
     'btn_register': {
       'en': 'Register! 🔧',
-      'hi': 'Register Karo! 🔧',
+      'hi': 'रजिस्टर करो! 🔧',
       'pa': 'ਰਜਿਸਟਰ ਕਰੋ! 🔧',
       'ta': 'பதிவு செய்யுங்கள்! 🔧',
       'te': 'నమోదు చేయండి! 🔧',
@@ -202,7 +202,7 @@ class TranslationMap {
     // ── AI Mechanic screen ────────────────────────────────
     'ai_welcome': {
       'en': 'Hello Brother! 🙏 I am Raahi Bhaiya.\n\nWhat problem is your vehicle having? Tell me — I will guide you step by step.\n\nYou can also use Voice! 🎙️',
-      'hi': 'Namaste Bhai! 🙏 Main Raahi Bhaiya hoon.\n\nAapki gaadi mein kya problem aa rahi hai? Bolo, main help karunga — step by step.\n\nVoice se bhi bol sakte ho! 🎙️',
+      'hi': 'नमस्ते भाई! 🙏 मैं राही भैया हूँ।\n\nआपकी गाड़ी में क्या समस्या आ रही है? बताइए — मैं कदम-दर-कदम मदद करूँगा।\n\nआवाज़ से भी बोल सकते हो! 🎙️',
       'pa': 'ਸਤਿ ਸ੍ਰੀ ਅਕਾਲ ਭਾਈ! 🙏 ਮੈਂ ਸਹਾਇਕ ਭਾਈਆ ਹਾਂ।\n\nਤੁਹਾਡੀ ਗੱਡੀ ਵਿੱਚ ਕੀ ਸਮੱਸਿਆ ਹੈ? ਦੱਸੋ — ਮੈਂ ਕਦਮ ਦਰ ਕਦਮ ਮਦਦ ਕਰਾਂਗਾ। 🎙️',
       'ta': 'வணக்கம் அண்ணா! 🙏 நான் சஹாயக் பையா.\n\nஉங்கள் வாகனத்தில் என்ன பிரச்சனை? சொல்லுங்கள் — படிப்படியாக வழிகாட்டுவேன். 🎙️',
       'te': 'నమస్కారం అన్నా! 🙏 నేను సహాయక్ భయ్యా.\n\nమీ వాహనంలో ఏమి సమస్య? చెప్పండి — అడుగడుగునా సహాయం చేస్తాను. 🎙️',
@@ -210,7 +210,7 @@ class TranslationMap {
     },
     'ai_input_hint': {
       'en': 'Type your problem...',
-      'hi': 'Problem batao...',
+      'hi': 'समस्या बताओ...',
       'pa': 'ਸਮੱਸਿਆ ਦੱਸੋ...',
       'ta': 'பிரச்சனை சொல்லுங்கள்...',
       'te': 'సమస్య చెప్పండి...',
@@ -218,7 +218,7 @@ class TranslationMap {
     },
     'ai_listening': {
       'en': '🎙️ Listening...',
-      'hi': '🎙️ Sun raha hoon...',
+      'hi': '🎙️ सुन रहा हूँ...',
       'pa': '🎙️ ਸੁਣ ਰਿਹਾ ਹਾਂ...',
       'ta': '🎙️ கேட்கிறேன்...',
       'te': '🎙️ వింటున్నాను...',
@@ -228,7 +228,7 @@ class TranslationMap {
     // ── Recent Activity ───────────────────────────────────
     'recent_activity': {
       'en': 'Recent Activity',
-      'hi': 'Recent Activity',
+      'hi': 'हालिया गतिविधि',
       'pa': 'ਹਾਲੀਆ ਗਤੀਵਿਧੀ',
       'ta': 'சமீபத்திய செயல்பாடு',
       'te': 'ఇటీవలి కార్యకలాపం',
@@ -236,7 +236,7 @@ class TranslationMap {
     },
     'no_activity': {
       'en': 'No activity yet\nStay available to get job notifications',
-      'hi': 'Abhi tak koi activity nahi\nAvailable rehne se jobs milenge',
+      'hi': 'अभी तक कोई गतिविधि नहीं\nउपलब्ध रहने पर काम मिलेगा',
       'pa': 'ਹਾਲੇ ਕੋਈ ਗਤੀਵਿਧੀ ਨਹੀਂ',
       'ta': 'இதுவரை எந்த செயல்பாடும் இல்லை',
       'te': 'ఇంకా ఏ కార్యకలాపమూ లేదు',
@@ -247,7 +247,7 @@ class TranslationMap {
     // ── Login Screen ─────────────────────────────────────
     'welcome_title': {
       'en': 'Welcome\nBack, Bhai! 👋',
-      'hi': 'Wapas Aao\nBhai! 👋',
+      'hi': 'वापस आओ\nभाई! 👋',
       'pa': 'ਵਾਪਸ ਆਓ\nਭਾਈ! 👋',
       'ta': 'மீண்டும் வருக\nஅண்ணா! 👋',
       'te': 'తిరిగి స్వాగతం\nఅన్నా! 👋',
@@ -255,7 +255,7 @@ class TranslationMap {
     },
     'welcome_sub': {
       'en': 'Login with Phone or Google',
-      'hi': 'Phone ya Google se login karo',
+      'hi': 'फ़ोन या गूगल से लॉगिन करो',
       'pa': 'ਫੋਨ ਜਾਂ ਗੂਗਲ ਨਾਲ ਲੌਗਿਨ ਕਰੋ',
       'ta': 'போன் அல்லது கூகிள் மூலம் உள்நுழையுங்கள்',
       'te': 'ఫోన్ లేదా గూగుల్ తో లాగిన్ చేయండి',
@@ -263,7 +263,7 @@ class TranslationMap {
     },
     'mobile_number': {
       'en': 'Mobile Number',
-      'hi': 'Mobile Number',
+      'hi': 'मोबाइल नंबर',
       'pa': 'ਮੋਬਾਈਲ ਨੰਬਰ',
       'ta': 'மொபைல் எண்',
       'te': 'మొబైల్ నంబర్',
@@ -279,7 +279,7 @@ class TranslationMap {
     },
     'or_divider': {
       'en': 'OR',
-      'hi': 'YA PHIR',
+      'hi': 'या फिर',
       'pa': 'ਜਾਂ ਫਿਰ',
       'ta': 'அல்லது',
       'te': 'లేదా',
@@ -287,7 +287,7 @@ class TranslationMap {
     },
     'btn_google_login': {
       'en': 'Continue with Google',
-      'hi': 'Google se Login Karo',
+      'hi': 'गूगल से लॉगिन करो',
       'pa': 'ਗੂਗਲ ਨਾਲ ਜਾਰੀ ਰੱਖੋ',
       'ta': 'கூகிள் மூலம் தொடரவும்',
       'te': 'గూగుల్ తో కొనసాగండి',
@@ -295,7 +295,7 @@ class TranslationMap {
     },
     'mechanic_register_link': {
       'en': 'Are you a Mechanic? Register here →',
-      'hi': 'Mechanic ho? Yahan register karo →',
+      'hi': 'मैकेनिक हो? यहाँ रजिस्टर करो →',
       'pa': 'ਮਕੈਨਿਕ ਹੋ? ਇੱਥੇ ਰਜਿਸਟਰ ਕਰੋ →',
       'ta': 'மெக்கானிக்கா? இங்கே பதிவு செய்யுங்கள் →',
       'te': 'మెకానిక్ అయితే? ఇక్కడ నమోదు చేయండి →',
@@ -303,7 +303,7 @@ class TranslationMap {
     },
     'terms_note': {
       'en': 'By logging in, you agree to our Terms & Conditions',
-      'hi': 'Login karke aap Terms & Conditions se agree karte ho',
+      'hi': 'लॉगिन करके आप शर्तों से सहमत हैं',
       'pa': 'ਲੌਗਿਨ ਕਰਕੇ ਤੁਸੀਂ ਸ਼ਰਤਾਂ ਨਾਲ ਸਹਿਮਤ ਹੋ',
       'ta': 'உள்நுழைவதன் மூலம் நீங்கள் விதிமுறைகளை ஒப்புக்கொள்கிறீர்கள்',
       'te': 'లాగిన్ చేయడం ద్వారా మీరు నిబంధనలకు అంగీకరిస్తున్నారు',
@@ -311,7 +311,7 @@ class TranslationMap {
     },
     'invalid_phone': {
       'en': 'Please enter a valid 10-digit number',
-      'hi': 'Sahi 10 digit number daalo',
+      'hi': 'सही 10 अंक का नंबर दालो',
       'pa': 'ਸਹੀ 10 ਅੰਕ ਨੰਬਰ ਦਾਖਲ ਕਰੋ',
       'ta': 'சரியான 10 இலக்க எண் உள்ளிடவும்',
       'te': 'సరైన 10 అంక నంబర్ నమోదు చేయండి',
@@ -319,7 +319,7 @@ class TranslationMap {
     },
     'otp_failed': {
       'en': 'OTP failed. Please try again.',
-      'hi': 'OTP nahi aaya. Dobara try karo.',
+      'hi': 'OTP नहीं आया। दोबारा प्रयास करो।',
       'pa': 'OTP ਨਹੀਂ ਆਇਆ। ਦੁਬਾਰਾ ਕੋਸ਼ਿਸ਼ ਕਰੋ।',
       'ta': 'OTP வரவில்லை. மீண்டும் முயற்சிக்கவும்.',
       'te': 'OTP రాలేదు. మళ్ళీ ప్రయత్నించండి.',
@@ -329,7 +329,7 @@ class TranslationMap {
 
     'shop': {
       'en': 'Shop',
-      'hi': 'Shop',
+      'hi': 'दुकान',
       'pa': 'ਦੁਕਾਨ',
       'ta': 'கடை',
       'te': 'షాప్',
@@ -358,7 +358,7 @@ class TranslationMap {
       },
       'ai_mechanic_sub': {
         'en': 'Instant car problem diagnosis',
-        'hi': 'Car ki problem turant pehchano',
+        'hi': 'गाड़ी की समस्या तुरंत पहचानो',
         'pa': 'ਕਾਰ ਦੀ ਸਮੱਸਿਆ ਤੁਰੰਤ ਪਛਾਣੋ',
         'ta': 'உடனடி கார் பிரச்சனை கண்டறிதல்',
         'te': 'తక్షణ కారు సమస్య నిర్ధారణ',
@@ -382,7 +382,7 @@ class TranslationMap {
       },
       'six_languages': {
         'en': '🌐 6 Languages',
-        'hi': '🌐 6 Bhashayen',
+        'hi': '🌐 ६ भाषाएँ',
         'pa': '🌐 6 ਭਾਸ਼ਾਵਾਂ',
         'ta': '🌐 6 மொழிகள்',
         'te': '🌐 6 భాషలు',
@@ -390,7 +390,7 @@ class TranslationMap {
       },
       'instant': {
         'en': '⚡ Instant',
-        'hi': '⚡ Turant',
+        'hi': '⚡ तुरंत',
         'pa': '⚡ ਤੁਰੰਤ',
         'ta': '⚡ உடனடி',
         'te': '⚡ తక్షణం',
@@ -406,7 +406,7 @@ class TranslationMap {
       },
       'start_diagnosis': {
         'en': 'Start Diagnosis',
-        'hi': 'Diagnosis Shuru Karo',
+        'hi': 'जाँच शुरू करो',
         'pa': 'ਜਾਂਚ ਸ਼ੁਰੂ ਕਰੋ',
         'ta': 'கண்டறிதல் தொடங்கு',
         'te': 'నిర్ధారణ ప్రారంభించండి',
@@ -414,7 +414,7 @@ class TranslationMap {
       },
       'describe_hint': {
         'en': 'Describe in Hindi, English, or any language',
-        'hi': 'Hindi, English ya kisi bhi bhasha mein batao',
+        'hi': 'हिंदी, अंग्रेज़ी या किसी भी भाषा में बताओ',
         'pa': 'ਕਿਸੇ ਵੀ ਭਾਸ਼ਾ ਵਿੱਚ ਦੱਸੋ',
         'ta': 'எந்த மொழியிலும் விவரிக்கவும்',
         'te': 'ఏ భాషలోనైనా వివరించండి',
@@ -424,7 +424,7 @@ class TranslationMap {
       // ── Quick Grid ────────────────────────────────────────
       'quick_actions': {
         'en': 'QUICK ACTIONS',
-        'hi': 'QUICK ACTIONS',
+        'hi': 'त्वरित कार्य',
         'pa': 'ਤੁਰੰਤ ਕਾਰਵਾਈਆਂ',
         'ta': 'விரைவு செயல்கள்',
         'te': 'శ్రీఘ్ర చర్యలు',
@@ -432,7 +432,7 @@ class TranslationMap {
       },
       'roadside_help': {
         'en': 'Roadside Help',
-        'hi': 'Roadside Madad',
+        'hi': 'रोडसाइड मदद',
         'pa': 'ਸੜਕ ਕਿਨਾਰੇ ਮਦਦ',
         'ta': 'சாலை உதவி',
         'te': 'రోడ్‌సైడ్ సహాయం',
@@ -440,7 +440,7 @@ class TranslationMap {
       },
       'get_help_fast': {
         'en': 'Get help fast',
-        'hi': 'Jaldi madad pao',
+        'hi': 'जल्दी मदद पाओ',
         'pa': 'ਜਲਦੀ ਮਦਦ ਲਓ',
         'ta': 'விரைந்து உதவி பெறுங்கள்',
         'te': 'త్వరగా సహాయం పొందండి',
@@ -448,7 +448,7 @@ class TranslationMap {
       },
       'find_workshops': {
         'en': 'Find workshops',
-        'hi': 'Workshop dhundo',
+        'hi': 'वर्कशॉप ढूँढो',
         'pa': 'ਵਰਕਸ਼ਾਪ ਲੱਭੋ',
         'ta': 'பட்டறை தேடுங்கள்',
         'te': 'వర్క్‌షాప్ వెతకండి',
@@ -456,7 +456,7 @@ class TranslationMap {
       },
       'maintenance_tips': {
         'en': 'Maintenance Tips',
-        'hi': 'Maintenance Tips',
+        'hi': 'रखरखाव टिप्स',
         'pa': 'ਰੱਖ-ਰਖਾਅ ਸੁਝਾਅ',
         'ta': 'பராமரிப்பு குறிப்புகள்',
         'te': 'నిర్వహణ చిట్కాలు',
@@ -464,7 +464,7 @@ class TranslationMap {
       },
       'keep_car_healthy': {
         'en': 'Keep car healthy',
-        'hi': 'Gaadi theek rakho',
+        'hi': 'गाड़ी ठीक रखो',
         'pa': 'ਕਾਰ ਨੂੰ ਤੰਦਰੁਸਤ ਰੱਖੋ',
         'ta': 'காரை ஆரோக்கியமாக வைக்கவும்',
         'te': 'కారును ఆరోగ్యంగా ఉంచండి',
@@ -472,7 +472,7 @@ class TranslationMap {
       },
       'car_health': {
         'en': 'Car Health',
-        'hi': 'Car Health',
+        'hi': 'गाड़ी स्वास्थ्य',
         'pa': 'ਕਾਰ ਸਿਹਤ',
         'ta': 'கார் ஆரோக்கியம்',
         'te': 'కారు ఆరోగ్యం',
@@ -480,7 +480,7 @@ class TranslationMap {
       },
       'view_diagnostics': {
         'en': 'View diagnostics',
-        'hi': 'Diagnostics dekho',
+        'hi': 'डायग्नोस्टिक्स देखो',
         'pa': 'ਡਾਇਗਨੋਸਟਿਕਸ ਵੇਖੋ',
         'ta': 'நோயறிதல்களை காண்க',
         'te': 'డయాగ్నొస్టిక్స్ చూడండి',
@@ -490,7 +490,7 @@ class TranslationMap {
       // ── Helper Toggle ─────────────────────────────────────
       'helper_on': {
         'en': 'Helper Mode — Active',
-        'hi': 'Helper Mode — Active',
+        'hi': 'सहायक मोड — सक्रिय',
         'pa': 'ਮਦਦਗਾਰ ਮੋਡ — ਕਿਰਿਆਸ਼ੀਲ',
         'ta': 'உதவியாளர் முறை — செயலில்',
         'te': 'హెల్పర్ మోడ్ — యాక్టివ్',
@@ -498,7 +498,7 @@ class TranslationMap {
       },
       'helper_off': {
         'en': 'Helper Mode — Off',
-        'hi': 'Helper Mode — Off',
+        'hi': 'सहायक मोड — बंद',
         'pa': 'ਮਦਦਗਾਰ ਮੋਡ — ਬੰਦ',
         'ta': 'உதவியாளர் முறை — அணைக்கப்பட்டது',
         'te': 'హెల్పర్ మోడ్ — ఆఫ్',
@@ -506,7 +506,7 @@ class TranslationMap {
       },
       'helper_on_sub': {
         'en': 'Receiving nearby help requests',
-        'hi': 'Aas-paas ki help requests aa rahi hain',
+        'hi': 'आस-पास की मदद अनुरोध आ रहे हैं',
         'pa': 'ਨੇੜੇ ਦੀਆਂ ਮਦਦ ਬੇਨਤੀਆਂ ਪ੍ਰਾਪਤ ਹੋ ਰਹੀਆਂ ਹਨ',
         'ta': 'அருகிலுள்ள உதவி கோரிக்கைகளை பெறுகிறோம்',
         'te': 'దగ్గరలో సహాయ అభ్యర్థనలు స్వీకరిస్తున్నాయి',
@@ -514,7 +514,7 @@ class TranslationMap {
       },
       'helper_off_sub': {
         'en': 'Enable to earn by helping others',
-        'hi': 'Enable karo aur doosron ki madad karke kamao',
+        'hi': 'चालू करो और दूसरों की मदद करके कमाओ',
         'pa': 'ਦੂਜਿਆਂ ਦੀ ਮਦਦ ਕਰਕੇ ਕਮਾਉਣ ਲਈ ਚਾਲੂ ਕਰੋ',
         'ta': 'மற்றவர்களுக்கு உதவி சம்பாதிக்க இயக்கவும்',
         'te': 'ఇతరులకు సహాయం చేసి సంపాదించడానికి ఎనేబుల్ చేయండి',
@@ -524,7 +524,7 @@ class TranslationMap {
       // ── Daily Section ─────────────────────────────────────
       'today': {
         'en': 'TODAY',
-        'hi': 'AAJ',
+        'hi': 'आज',
         'pa': 'ਅੱਜ',
         'ta': 'இன்று',
         'te': 'ఈ రోజు',
@@ -532,7 +532,7 @@ class TranslationMap {
       },
       'fuel_rates': {
         'en': 'Fuel Rates',
-        'hi': 'Petrol/Diesel Rate',
+        'hi': 'पेट्रोल/डीजल रेट',
         'pa': 'ਬਾਲਣ ਦਰਾਂ',
         'ta': 'எரிபொருள் விகிதங்கள்',
         'te': 'ఇంధన రేట్లు',
@@ -540,7 +540,7 @@ class TranslationMap {
       },
       'fuel_sub': {
         'en': 'Petrol/Diesel daily update',
-        'hi': 'Roz ka rate dekhein',
+        'hi': 'रोज़ का रेट देखें',
         'pa': 'ਰੋਜ਼ਾਨਾ ਬਾਲਣ ਅੱਪਡੇਟ',
         'ta': 'தினசரி புதுப்பிப்பு',
         'te': 'రోజువారీ అప్‌డేట్',
@@ -548,7 +548,7 @@ class TranslationMap {
       },
       'fuel_tag': {
         'en': 'Daily',
-        'hi': 'Daily',
+        'hi': 'दैनिक',
         'pa': 'ਰੋਜ਼ਾਨਾ',
         'ta': 'தினசரி',
         'te': 'రోజువారీ',
@@ -556,7 +556,7 @@ class TranslationMap {
       },
       'highway_alerts': {
         'en': 'Highway Alerts',
-        'hi': 'Highway Alerts',
+        'hi': 'हाईवे अलर्ट',
         'pa': 'ਹਾਈਵੇ ਅਲਰਟ',
         'ta': 'நெடுஞ்சாலை எச்சரிக்கைகள்',
         'te': 'హైవే అలర్ట్‌లు',
@@ -564,7 +564,7 @@ class TranslationMap {
       },
       'highway_sub': {
         'en': 'Jam • Weather • Police',
-        'hi': 'Jam • Mausam • Police',
+        'hi': 'जाम • मौसम • पुलिस',
         'pa': 'ਜਾਮ • ਮੌਸਮ • ਪੁਲਿਸ',
         'ta': 'நெரிசல் • வானிலை • போலீஸ்',
         'te': 'జామ్ • వాతావరణం • పోలీసు',
@@ -580,7 +580,7 @@ class TranslationMap {
       },
       'daily_tip': {
         'en': "Today's Tip",
-        'hi': 'Aaj Ka Tip',
+        'hi': 'आज का टिप',
         'pa': 'ਅੱਜ ਦੀ ਸਲਾਹ',
         'ta': 'இன்றைய குறிப்பு',
         'te': 'నేటి చిట్కా',
@@ -588,7 +588,7 @@ class TranslationMap {
       },
       'daily_tip_sub': {
         'en': 'Raahi daily car tip',
-        'hi': 'Raahi Bhaiya ka daily tip',
+        'hi': 'राही भैया का रोज़ाना टिप',
         'pa': 'ਰਾਹੀ ਦੀ ਰੋਜ਼ਾਨਾ ਸਲਾਹ',
         'ta': 'ராஹியின் தினசரி குறிப்பு',
         'te': 'రాహి రోజువారీ చిట్కా',
@@ -604,7 +604,7 @@ class TranslationMap {
       },
       'nearby_places': {
         'en': 'Nearby Places',
-        'hi': 'Aas-paas ki jagahen',
+        'hi': 'आस-पास की जगहें',
         'pa': 'ਨੇੜੇ ਦੀਆਂ ਥਾਵਾਂ',
         'ta': 'அருகிலுள்ள இடங்கள்',
         'te': 'దగ్గరలోని స్థలాలు',
@@ -612,7 +612,7 @@ class TranslationMap {
       },
       'nearby_sub': {
         'en': 'Dhaba • Parking • ATM',
-        'hi': 'Dhaba • Parking • ATM',
+        'hi': 'ढाबा • पार्किंग • ATM',
         'pa': 'ਢਾਬਾ • ਪਾਰਕਿੰਗ • ATM',
         'ta': 'தாபா • பார்க்கிங் • ATM',
         'te': 'ఢాభా • పార్కింగ్ • ATM',
@@ -630,7 +630,7 @@ class TranslationMap {
       // ── Streak Card ───────────────────────────────────────
       'daily_streak': {
         'en': 'Daily Streak',
-        'hi': 'Daily Streak',
+        'hi': 'दैनिक स्ट्रीक',
         'pa': 'ਰੋਜ਼ਾਨਾ ਸਟ੍ਰੀਕ',
         'ta': 'தினசரி தொடர்',
         'te': 'డైలీ స్ట్రీక్',
@@ -638,7 +638,7 @@ class TranslationMap {
       },
       'streak_sub': {
         'en': 'Come daily, earn rewards',
-        'hi': 'Roz aao, rewards kamao',
+        'hi': 'रोज़ आओ, इनाम कमाओ',
         'pa': 'ਰੋਜ਼ ਆਓ, ਇਨਾਮ ਕਮਾਓ',
         'ta': 'தினமும் வாருங்கள், வெகுமதிகள் பெறுங்கள்',
         'te': 'రోజూ రండి, రివార్డ్స్ సంపాదించండి',
@@ -646,7 +646,7 @@ class TranslationMap {
       },
       'check_in': {
         'en': 'Check-in',
-        'hi': 'Check-in Karo',
+        'hi': 'चेक-इन करो',
         'pa': 'ਚੈੱਕ-ਇਨ',
         'ta': 'செக்-இன்',
         'te': 'చెక్-ఇన్',
@@ -656,7 +656,7 @@ class TranslationMap {
       // ── Car Status Labels ─────────────────────────────────
       'odometer': {
         'en': 'Odometer',
-        'hi': 'Odometer',
+        'hi': 'ओडोमीटर',
         'pa': 'ਓਡੋਮੀਟਰ',
         'ta': 'ஓடோமீட்டர்',
         'te': 'ఓడోమీటర్',
@@ -664,7 +664,7 @@ class TranslationMap {
       },
       'last_service': {
         'en': 'Last Service',
-        'hi': 'Last Service',
+        'hi': 'अंतिम सेवा',
         'pa': 'ਆਖਰੀ ਸੇਵਾ',
         'ta': 'கடைசி சேவை',
         'te': 'చివరి సర్వీస్',
@@ -672,7 +672,7 @@ class TranslationMap {
       },
       'fuel_type': {
         'en': 'Fuel Type',
-        'hi': 'Fuel Type',
+        'hi': 'ईंधन प्रकार',
         'pa': 'ਬਾਲਣ ਕਿਸਮ',
         'ta': 'எரிபொருள் வகை',
         'te': 'ఇంధన రకం',

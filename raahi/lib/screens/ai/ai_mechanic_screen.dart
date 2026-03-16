@@ -174,7 +174,7 @@ class _AiMechanicScreenState extends State<AiMechanicScreen>
     _transCtrl.reverse();
 
     try {
-      final reply = await ApiService().sendAiMessage(
+      final reply = await ApiService().sendAiMessageWithFallback(
         sessionId: _sessionId,
         message: text,
         history: [],
