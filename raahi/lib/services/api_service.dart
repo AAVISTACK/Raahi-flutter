@@ -191,39 +191,36 @@ class ApiService {
   }
 
   Future<String> _sendAiMessageDirect({
-    required String message,
-    String languageCode = 'hi',
-  }) async {
-    final langName = _langDisplayName(languageCode);
-    final prompt =
-        'You are Raahi Bhaiya, an expert Indian roadside assistance AI mechanic. '
-        'Reply ONLY in $langName. '
-        'User vehicle problem: $message\n\n'
-        'Provide:\n'
-        '**Possible Issue:** (one clear line)\n'
-        '**Urgency:** low / medium / high\n'
-        '**Suggested Action:** (2-3 practical steps for Indian roads)\n'
-        'Keep it simple, warm, and helpful.';
+      required String message,
+      String languageCode = 'hi',
+    }) async {
+      const geminiUrl =
+          'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent'
+          '?key=AIzaSyC0hmuQibdcPsQStTyofhhHw86HWs4ZD7k';
+      final response = await http.post(
+        Uri.parse(geminiUrl),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'contents': [
+            {
+              'parts': [
+                {
+                  'text':
+                      'You are Raahi AI mechanic. User says: $message. Give helpful car advice in Hindi.'
+                }
+              ]
+            }
+          ],
+        }),
+      );
+      if (response.statusCode != 200) {
+        throw Exception('Gemini error: ${response.statusCode}');
+      }
+      final data = jsonDecode(response.body) as Map<String, dynamic>;
+      return data['candidates'][0]['content']['parts'][0]['text'] as String;
+    }
 
-    final geminiDio = Dio();
-    final res = await geminiDio.post(
-      'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent',
-      queryParameters: {'key': AppConstants.geminiKey},
-      data: {
-        'contents': [
-          {
-            'parts': [
-              {'text': prompt}
-            ]
-          }
-        ],
-        'generationConfig': {'temperature': 0.7, 'maxOutputTokens': 400},
-      },
-    );
-    return res.data['candidates'][0]['content']['parts'][0]['text'] as String;
-  }
-
-  String _langDisplayName(String code) {
+    String _langDisplayName(String code) {
     switch (code) {
       case 'hi': return 'Hindi (Devanagari script)';
       case 'pa': return 'Punjabi (Gurmukhi script)';

@@ -1,8 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
-<resources>
-    <!-- Theme applied to the Android Window while Flutter UI initializes
-         and behind your Flutter UI while its running. -->
-    <style name="NormalTheme" parent="@android:style/Theme.Black.NoTitleBar">
-        <item name="android:windowBackground">#0A0E21</item>
-    </style>
-</resources>
+  <resources>
+      <style name="NormalTheme"
+             parent="@android:style/Theme.Black.NoTitleBar">
+          <item name="android:windowBackground">#0A0E21</item>
+          <item name="android:windowIsTranslucent">false</item>
+          <item name="android:windowNoTitle">true</item>
+      </style>
+  </resources>
+  

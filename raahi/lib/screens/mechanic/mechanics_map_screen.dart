@@ -260,21 +260,28 @@ class _MechanicsMapScreenState extends State<MechanicsMapScreen>
   }
 
   Marker _userMarker() => Marker(
-    point: _userLoc,
-    width: 50,
-    height: 50,
-    child: Container(
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        color: AppTheme.primary,
-        border: Border.all(color: Colors.white, width: 3),
-        boxShadow: [BoxShadow(color: AppTheme.primary.withOpacity(0.5), blurRadius: 12)],
+      point: _userLoc,
+      width: 24,
+      height: 24,
+      child: Container(
+        width: 16,
+        height: 16,
+        decoration: BoxDecoration(
+          color: Colors.blue,
+          shape: BoxShape.circle,
+          border: Border.all(color: Colors.white, width: 2),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.blue.withOpacity(0.3),
+              blurRadius: 8,
+              spreadRadius: 4,
+            ),
+          ],
+        ),
       ),
-      child: const Icon(Icons.person_rounded, color: Colors.white, size: 22),
-    ),
-  );
+    );
 
-  Marker _breakdownMarker() => Marker(
+    Marker _breakdownMarker() => Marker(
     point: LatLng(widget.breakdownRequest!.latitude, widget.breakdownRequest!.longitude),
     width: 44,
     height: 52,

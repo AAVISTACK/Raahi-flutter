@@ -8,6 +8,7 @@ import 'package:go_router/go_router.dart';
 import '../../theme/app_theme.dart';
 import '../../models/models.dart';
 import '../../services/language_service.dart';
+import 'package:geolocator/geolocator.dart';
 import '../../services/location_service.dart';
 import '../../widgets/ad_banner_widget.dart';
 import '../../widgets/ui_components.dart';
@@ -53,7 +54,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     _runStaggered();
     NotificationService().init(); // FCM init
     NotificationService().subscribeToTips(); // Daily tips
-    LocationService().requestPermission(); // Request location permission here, not on splash
+    _requestLocationPermission();
   }
 
   Future<void> _runStaggered() async {
@@ -63,11 +64,18 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     }
   }
 
-  @override
-  void dispose() {
-    for (final c in _cardCtrls) c.dispose();
-    super.dispose();
-  }
+  Future<void> _requestLocationPermission() async {
+      final permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        await Geolocator.requestPermission();
+      }
+    }
+
+    @override
+    void dispose() {
+      for (final c in _cardCtrls) c.dispose();
+      super.dispose();
+    }
 
   Widget _animated(int index, Widget child) {
     return FadeTransition(
