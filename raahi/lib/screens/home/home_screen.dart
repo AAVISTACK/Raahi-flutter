@@ -97,7 +97,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                 decoration: BoxDecoration(color: AppTheme.cardBorder,
                     borderRadius: BorderRadius.circular(2)))),
               const SizedBox(height: 20),
-              const Text('Bhasha / Language',
+              Text(_lang.t('choose_language'),
                 style: TextStyle(fontFamily: 'Rajdhani', fontSize: 20,
                     fontWeight: FontWeight.w700, color: AppTheme.textPrimary)),
               const SizedBox(height: 16),
@@ -287,13 +287,13 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
         const AppDivider(margin: EdgeInsets.symmetric(vertical: 12)),
         // Stats row
         Row(children: [
-          _CarStat(icon: Icons.speed_rounded, label: 'Odometer',
+          _CarStat(icon: Icons.speed_rounded, label: _lang.t('odometer'),
               value: '48,320 km', color: AppTheme.cyan),
           _Divider(),
-          _CarStat(icon: Icons.build_circle_outlined, label: 'Last Service',
+          _CarStat(icon: Icons.build_circle_outlined, label: _lang.t('last_service'),
               value: '2 mo ago', color: AppTheme.yellow),
           _Divider(),
-          _CarStat(icon: Icons.local_gas_station_rounded, label: 'Fuel Type',
+          _CarStat(icon: Icons.local_gas_station_rounded, label: _lang.t('fuel_type'),
               value: 'Petrol', color: AppTheme.primary),
         ]),
       ]),
@@ -330,11 +330,11 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
               child: const Icon(Icons.smart_toy_rounded, color: Colors.white, size: 26)),
             const SizedBox(width: 14),
             Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              const Text('AI Mechanic',
+              Text(_lang.t('ai_mechanic_title'),
                 style: TextStyle(fontFamily: 'Rajdhani', fontSize: 22,
                   fontWeight: FontWeight.w700, color: AppTheme.textPrimary,
                   letterSpacing: 0.3)),
-              const Text('Instant car problem diagnosis',
+              Text(_lang.t('ai_mechanic_sub'),
                 style: TextStyle(color: AppTheme.textMuted, fontSize: 12)),
             ])),
             Container(
@@ -348,7 +348,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                   decoration: const BoxDecoration(shape: BoxShape.circle,
                     color: AppTheme.green)),
                 const SizedBox(width: 5),
-                const Text('Online',
+                Text(_lang.t('status_online'),
                   style: TextStyle(color: AppTheme.green, fontSize: 10,
                       fontWeight: FontWeight.w700)),
               ])),
@@ -358,17 +358,17 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
 
           // Feature chips
           Wrap(spacing: 8, runSpacing: 6, children: [
-            _FeatureChip('🗣️ Voice Input'),
-            _FeatureChip('🌐 6 Languages'),
-            _FeatureChip('⚡ Instant'),
-            _FeatureChip('🆓 Free'),
+            _FeatureChip(_lang.t('voice_input')),
+            _FeatureChip(_lang.t('six_languages')),
+            _FeatureChip(_lang.t('instant')),
+            _FeatureChip(_lang.t('free')),
           ]),
 
           const SizedBox(height: 20),
 
           // Primary CTA
           GlowButton(
-            label: 'Start Diagnosis',
+            label: _lang.t('start_diagnosis'),
             icon: Icons.search_rounded,
             height: 56,
             fontSize: 18,
@@ -379,7 +379,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
           const SizedBox(height: 10),
 
           // Secondary hint
-          Center(child: Text('Describe in Hindi, English, or any language',
+          Center(child: Text(_lang.t('describe_hint'),
             style: const TextStyle(color: AppTheme.textMuted, fontSize: 11))),
         ]),
       ),
@@ -389,17 +389,17 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   // ── Quick 2x2 Grid ────────────────────────────────────────
   Widget _buildQuickGrid() {
     final items = [
-      _QA('Roadside Help', Icons.emergency_rounded, AppTheme.primary,
-          'Get help fast', '/request-help'),
-      _QA('Nearby Mechanics', Icons.build_rounded, AppTheme.cyan,
-          'Find workshops', '/mechanics'),
-      _QA('Maintenance Tips', Icons.tips_and_updates_rounded, AppTheme.yellow,
-          'Keep car healthy', '/ai-mechanic'),
-      _QA('Car Health', Icons.favorite_rounded, AppTheme.green,
-          'View diagnostics', '/profile'),
+      _QA(_lang.t('roadside_help'), Icons.emergency_rounded, AppTheme.primary,
+          _lang.t('get_help_fast'), '/request-help'),
+      _QA(_lang.t('find_mechanic'), Icons.build_rounded, AppTheme.cyan,
+          _lang.t('find_workshops'), '/mechanics'),
+      _QA(_lang.t('maintenance_tips'), Icons.tips_and_updates_rounded, AppTheme.yellow,
+          _lang.t('keep_car_healthy'), '/ai-mechanic'),
+      _QA(_lang.t('car_health'), Icons.favorite_rounded, AppTheme.green,
+          _lang.t('view_diagnostics'), '/profile'),
     ];
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      const SectionLabel('QUICK ACTIONS'),
+      SectionLabel(_lang.t('quick_actions')),
       GridView.builder(
         shrinkWrap: true,
         physics: const NeverScrollableScrollPhysics(),
@@ -439,12 +439,11 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                   : null)),
           const SizedBox(width: 12),
           Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text(_isAvailable ? 'Helper Mode — Active' : 'Helper Mode — Off',
+            Text(_isAvailable ? _lang.t('helper_on') : _lang.t('helper_off'),
               style: TextStyle(
                 color: _isAvailable ? AppTheme.green : AppTheme.textPrimary,
                 fontWeight: FontWeight.w700, fontSize: 13)),
-            Text(_isAvailable ? 'Receiving nearby help requests'
-                : 'Enable to earn by helping others',
+            Text(_isAvailable ? _lang.t('helper_on_sub') : _lang.t('helper_off_sub'),
               style: const TextStyle(color: AppTheme.textMuted, fontSize: 11)),
           ])),
           Switch(value: _isAvailable,
@@ -458,20 +457,20 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   // ── Daily Section ─────────────────────────────────────────
   Widget _buildDailySection() {
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      const SectionLabel('TODAY'),
+      SectionLabel(_lang.t('today')),
       // Row 1: Fuel + Alerts
       Row(children: [
         Expanded(child: _DailyCard(
-          emoji: '⛽', title: 'Fuel Rates',
-          sub: 'Petrol/Diesel daily update',
-          tag: 'Daily', tagColor: AppTheme.primary,
+          emoji: '⛽', title: _lang.t('fuel_rates'),
+          sub: _lang.t('fuel_sub'),
+          tag: _lang.t('fuel_tag'), tagColor: AppTheme.primary,
           onTap: () => Navigator.push(context,
             MaterialPageRoute(builder: (_) => const FuelRatesScreen())))),
         const SizedBox(width: 10),
         Expanded(child: _DailyCard(
-          emoji: '🚦', title: 'Highway Alerts',
-          sub: 'Jam • Weather • Police',
-          tag: 'Live', tagColor: AppTheme.red, badgeDot: true,
+          emoji: '🚦', title: _lang.t('highway_alerts'),
+          sub: _lang.t('highway_sub'),
+          tag: _lang.t('highway_tag'), tagColor: AppTheme.red, badgeDot: true,
           onTap: () => Navigator.push(context,
             MaterialPageRoute(builder: (_) => const HighwayAlertsScreen())))),
       ]),
@@ -479,16 +478,16 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       // Row 2: Tips + Places
       Row(children: [
         Expanded(child: _DailyCard(
-          emoji: '💡', title: 'Aaj Ka Tip',
-          sub: 'Raahi Bhaiya ka daily tip',
-          tag: 'New', tagColor: AppTheme.yellow,
+          emoji: '💡', title: _lang.t('daily_tip'),
+          sub: _lang.t('daily_tip_sub'),
+          tag: _lang.t('daily_tip_tag'), tagColor: AppTheme.yellow,
           onTap: () => Navigator.push(context,
             MaterialPageRoute(builder: (_) => const DailyTipsScreen())))),
         const SizedBox(width: 10),
         Expanded(child: _DailyCard(
-          emoji: '🍽️', title: 'Nearby Places',
-          sub: 'Dhaba • Parking • ATM',
-          tag: 'GPS', tagColor: AppTheme.cyan,
+          emoji: '🍽️', title: _lang.t('nearby_places'),
+          sub: _lang.t('nearby_sub'),
+          tag: _lang.t('nearby_tag'), tagColor: AppTheme.cyan,
           onTap: () => Navigator.push(context,
             MaterialPageRoute(builder: (_) => const NearbyPlacesScreen())))),
       ]),
@@ -515,10 +514,10 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
         child: Row(children: [
           const Text('🔥', style: TextStyle(fontSize: 28)),
           const SizedBox(width: 12),
-          const Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text('Daily Streak', style: TextStyle(color: AppTheme.textPrimary,
+          Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Text(_lang.t('daily_streak'), style: const TextStyle(color: AppTheme.textPrimary,
                 fontWeight: FontWeight.w700, fontSize: 14)),
-            Text('Roz aao, rewards kamao', style: TextStyle(
+            Text(_lang.t('streak_sub'), style: const TextStyle(
                 color: AppTheme.textSecondary, fontSize: 12)),
           ])),
           Container(
@@ -527,7 +526,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
               color: AppTheme.primary,
               borderRadius: BorderRadius.circular(20),
             ),
-            child: const Text('Check-in', style: TextStyle(color: Colors.white,
+            child: Text(_lang.t('check_in'), style: const TextStyle(color: Colors.white,
                 fontSize: 12, fontWeight: FontWeight.w700)),
           ),
         ]),
