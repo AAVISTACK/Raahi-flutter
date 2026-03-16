@@ -63,15 +63,6 @@ workflows:
           cd $PROJECT_DIR
           dart run flutter_launcher_icons
 
-      - name: Generate native splash screen
-        script: |
-          if [ -d "raahi" ]; then
-            PROJECT_DIR="raahi"
-          else
-            PROJECT_DIR="."
-          fi
-          cd $PROJECT_DIR
-          dart run flutter_native_splash:create
 
       - name: Build Debug APK
         script: |
