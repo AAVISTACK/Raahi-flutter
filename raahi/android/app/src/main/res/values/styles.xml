@@ -3,6 +3,6 @@
     <!-- Theme applied to the Android Window while Flutter UI initializes
          and behind your Flutter UI while its running. -->
     <style name="NormalTheme" parent="@android:style/Theme.Black.NoTitleBar">
-        <item name="android:windowBackground">@android:color/black</item>
+        <item name="android:windowBackground">#0A0E21</item>
     </style>
 </resources>
