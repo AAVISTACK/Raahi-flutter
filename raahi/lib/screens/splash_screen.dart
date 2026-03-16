@@ -1,6 +1,6 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 
@@ -127,15 +127,15 @@ class _SplashScreenState extends State<SplashScreen>
       if (mounted) _dotsCtrl.repeat();
     });
 
-    // ── Navigate after 1 800 ms — animation done at 1 400 ms ────
-    Future.delayed(const Duration(milliseconds: 1800), () async {
+    // ── Navigate after 1 800 ms — check FirebaseAuth ─────────
+    Future.delayed(const Duration(milliseconds: 1800), () {
       if (!mounted) return;
-      final prefs = await SharedPreferences.getInstance();
-      final token = prefs.getString('auth_token');
-      if (!mounted) return;
-      if (token != null && token.isNotEmpty) {
+      final user = FirebaseAuth.instance.currentUser;
+      if (user != null) {
+        print('[SplashScreen] User logged in: ${user.uid} → /home');
         context.go('/home');
       } else {
+        print('[SplashScreen] No user → /phone-login');
         context.go('/phone-login');
       }
     });

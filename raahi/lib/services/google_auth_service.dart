@@ -1,7 +1,7 @@
 // ============================================================
 // lib/services/google_auth_service.dart
 // ============================================================
-// Handles: Google Sign-In → Firebase Auth → Backend JWT token
+// Handles: Google Sign-In → Firebase Auth (no backend JWT)
 //
 // FLOW:
 //   User taps "Google se Login" button
@@ -10,21 +10,11 @@
 //       ↓
 //   Google ID Token milta hai
 //       ↓
-//   Firebase Auth se verify hota hai
+//   Firebase Auth se signInWithCredential
 //       ↓
-//   Backend ko Firebase token bhejte hain → JWT milta hai
-//       ↓
-//   ApiService mein JWT save → HomeScreen
+//   HomeScreen / ProfileSetup
 //
-// FIX 1: Removed serverClientId from GoogleSignIn() for Android.
-//         Setting serverClientId causes ApiException: 10 (DEVELOPER_ERROR)
-//         when the value doesn't match what Firebase expects.
-//         Firebase resolves OAuth credentials automatically via google-services.json.
-//
-// FIX 2: Added step-by-step debug logs — visible in: flutter run / logcat.
-//         Each step prints OK or the exact failure point so you can diagnose fast.
-//
-// IMPORTANT — If ApiException: 10 still occurs after this fix:
+// NOTE — If ApiException: 10 (DEVELOPER_ERROR) occurs:
 //   Your SHA-1 fingerprint is not registered in Firebase Console.
 //   Steps to fix:
 //     1. Run: keytool -list -v -keystore ~/.android/debug.keystore
@@ -38,7 +28,6 @@
 
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
-import 'api_service.dart';
 
 class GoogleAuthService {
   // ── Singleton ──────────────────────────────────────────
@@ -46,8 +35,7 @@ class GoogleAuthService {
   factory GoogleAuthService() => _instance;
   GoogleAuthService._internal();
 
-  // serverClientId has been removed — it was causing ApiException: 10 (DEVELOPER_ERROR) on Android.
-  // Firebase handles credential verification automatically via google-services.json.
+  // No serverClientId — Firebase resolves OAuth automatically via google-services.json
   final _googleSignIn = GoogleSignIn(
     scopes: ['email', 'profile'],
   );
@@ -93,27 +81,7 @@ class GoogleAuthService {
       final firebaseUser = userCredential.user!;
       print('[GoogleAuth] Step 4 OK: uid=${firebaseUser.uid}, email=${firebaseUser.email}');
 
-      // Step 5: Firebase ID token backend ko bhejo → apna JWT lo
-      print('[GoogleAuth] Step 5: Getting Firebase ID token for backend...');
-      final firebaseToken = await firebaseUser.getIdToken();
-      print('[GoogleAuth] Step 5 OK: firebaseToken=${firebaseToken != null ? "present" : "NULL"}');
-
-      print('[GoogleAuth] Step 6: Calling backend googleSignIn API...');
-      final result = await ApiService().googleSignIn(
-        firebaseToken: firebaseToken!,
-        email: firebaseUser.email ?? '',
-        name: firebaseUser.displayName ?? '',
-        photoUrl: firebaseUser.photoURL ?? '',
-        googleId: firebaseUser.uid,
-      );
-      print('[GoogleAuth] Step 6 OK: backend token=${result['token'] != null ? "present" : "NULL"}');
-
-      // Step 7: JWT save karo
-      await ApiService().setToken(result['token']);
-
-      final isNewUser = result['is_new_user'] == true ||
-          userCredential.additionalUserInfo?.isNewUser == true;
-
+      final isNewUser = userCredential.additionalUserInfo?.isNewUser == true;
       print('[GoogleAuth] Sign-in complete! isNewUser=$isNewUser');
 
       return GoogleSignInResult(
@@ -121,7 +89,6 @@ class GoogleAuthService {
         name: firebaseUser.displayName ?? '',
         email: firebaseUser.email ?? '',
         photoUrl: firebaseUser.photoURL ?? '',
-        token: result['token'],
       );
     } on GoogleSignInCancelledException {
       rethrow;
@@ -141,7 +108,6 @@ class GoogleAuthService {
       _googleSignIn.signOut(),
       _firebaseAuth.signOut(),
     ]);
-    await ApiService().clearToken();
     print('[GoogleAuth] Signed out successfully.');
   }
 
@@ -172,14 +138,12 @@ class GoogleSignInResult {
   final String name;
   final String email;
   final String photoUrl;
-  final String token;
 
   const GoogleSignInResult({
     required this.isNewUser,
     required this.name,
     required this.email,
     required this.photoUrl,
-    required this.token,
   });
 }
 

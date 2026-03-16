@@ -1,16 +1,17 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:dio/dio.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:go_router/go_router.dart';
 import '../../theme/app_theme.dart';
-import '../../services/api_service.dart';
 
 class OtpScreen extends StatefulWidget {
+  final String verificationId;
   final String phone;
 
   const OtpScreen({
     super.key,
+    required this.verificationId,
     required this.phone,
   });
 
@@ -26,10 +27,12 @@ class _OtpScreenState extends State<OtpScreen> {
   bool _loading = false;
   int _resendSeconds = 60;
   Timer? _timer;
+  String _currentVerificationId = '';
 
   @override
   void initState() {
     super.initState();
+    _currentVerificationId = widget.verificationId;
     _startResendTimer();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _focusNodes[0].requestFocus();
@@ -51,18 +54,21 @@ class _OtpScreenState extends State<OtpScreen> {
 
   String get _otp => _controllers.map((c) => c.text).join();
 
-  // ── Verify OTP via MSG91 backend ─────────────────────────────
+  // ── Verify OTP via Firebase ───────────────────────────────────
   Future<void> _verify() async {
     if (_otp.length != 6) return;
     setState(() => _loading = true);
     try {
-      final res = await ApiService().verifyMSG91Otp(widget.phone, _otp);
-      final token     = res['token'] as String;
-      final isNewUser = res['is_new_user'] as bool? ?? false;
-      await ApiService().setToken(token);
-      if (mounted) {
-        isNewUser ? context.go('/profile-setup') : context.go('/home');
-      }
+      final credential = PhoneAuthProvider.credential(
+        verificationId: _currentVerificationId,
+        smsCode: _otp,
+      );
+      await FirebaseAuth.instance.signInWithCredential(credential);
+      print('[FirebaseAuth] OTP verified successfully.');
+      if (mounted) context.go('/home');
+    } on FirebaseAuthException catch (e) {
+      print('[FirebaseAuth] OTP error: ${e.code} — ${e.message}');
+      if (mounted) _showError(_firebaseErrorMessage(e.code));
     } catch (e) {
       if (mounted) _showError('Galat OTP hai ya expire ho gaya. Dobara try karo.');
     } finally {
@@ -70,19 +76,39 @@ class _OtpScreenState extends State<OtpScreen> {
     }
   }
 
-  // ── Resend OTP via MSG91 ─────────────────────────────────────
+  // ── Resend OTP via Firebase ───────────────────────────────────
   Future<void> _resendOtp() async {
     for (final c in _controllers) c.clear();
     _focusNodes[0].requestFocus();
-    try {
-      final dio = Dio();
-      await dio.post(
-        'https://web-production-e6c90c.up.railway.app/api/v1/auth/send-otp',
-        data: {'phone': widget.phone},
-      );
-      _startResendTimer();
-    } catch (e) {
-      if (mounted) _showError('OTP bhejne mein error. Dobara try karo.');
+    await FirebaseAuth.instance.verifyPhoneNumber(
+      phoneNumber: widget.phone,
+      timeout: const Duration(seconds: 60),
+      verificationCompleted: (PhoneAuthCredential credential) async {
+        await FirebaseAuth.instance.signInWithCredential(credential);
+        if (mounted) context.go('/home');
+      },
+      verificationFailed: (FirebaseAuthException e) {
+        if (mounted) _showError(e.message ?? 'OTP bhejne mein error. Dobara try karo.');
+      },
+      codeSent: (String verificationId, int? resendToken) {
+        setState(() => _currentVerificationId = verificationId);
+        _startResendTimer();
+        print('[FirebaseAuth] OTP resent. New verificationId: $verificationId');
+      },
+      codeAutoRetrievalTimeout: (_) {},
+    );
+  }
+
+  String _firebaseErrorMessage(String code) {
+    switch (code) {
+      case 'invalid-verification-code':
+        return 'Galat OTP hai. Dobara check karo.';
+      case 'session-expired':
+        return 'OTP expire ho gaya. Dobara bhejo.';
+      case 'too-many-requests':
+        return 'Bahut zyada attempts. Thodi der baad try karo.';
+      default:
+        return 'OTP verify nahi hua ($code). Dobara try karo.';
     }
   }
 

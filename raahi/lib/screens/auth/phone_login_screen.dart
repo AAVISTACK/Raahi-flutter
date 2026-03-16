@@ -1,12 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:dio/dio.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:go_router/go_router.dart';
 import '../../theme/app_theme.dart';
-import '../../services/api_service.dart';
 import '../../services/google_auth_service.dart';
 import '../../services/language_service.dart';
-import '../../models/models.dart';
 
 class PhoneLoginScreen extends StatefulWidget {
   const PhoneLoginScreen({super.key});
@@ -20,7 +18,7 @@ class _PhoneLoginScreenState extends State<PhoneLoginScreen> {
   bool _otpLoading    = false;
   bool _googleLoading = false;
 
-  // ── Phone OTP via MSG91 ────────────────────────────────────────────
+  // ── Phone OTP via Firebase ─────────────────────────────────────
   Future<void> _sendOtp() async {
     final phone = _phoneCtrl.text.trim();
     if (phone.length != 10) {
@@ -28,26 +26,39 @@ class _PhoneLoginScreenState extends State<PhoneLoginScreen> {
       return;
     }
     setState(() => _otpLoading = true);
-    print('[MSG91] Sending OTP to +91$phone...');
-    try {
-      final fullPhone = '+91$phone';
-      final dio = Dio();
-      await dio.post(
-        'https://web-production-e6c90c.up.railway.app/api/v1/auth/send-otp',
-        data: {'phone': fullPhone},
-      );
-      print('[MSG91] OTP sent successfully');
-      if (mounted) {
-        setState(() => _otpLoading = false);
-        context.push('/otp', extra: {'phone': fullPhone});
-      }
-    } catch (e) {
-      print('[MSG91] Error sending OTP: $e');
-      if (mounted) {
-        setState(() => _otpLoading = false);
-        _snack('OTP bhejne mein error. Dobara try karo.');
-      }
-    }
+    final fullPhone = '+91$phone';
+    print('[FirebaseAuth] Sending OTP to $fullPhone...');
+
+    await FirebaseAuth.instance.verifyPhoneNumber(
+      phoneNumber: fullPhone,
+      timeout: const Duration(seconds: 60),
+      verificationCompleted: (PhoneAuthCredential credential) async {
+        // Auto-retrieval or instant verification (rare on real devices)
+        print('[FirebaseAuth] Auto-verification completed.');
+        await FirebaseAuth.instance.signInWithCredential(credential);
+        if (mounted) context.go('/home');
+      },
+      verificationFailed: (FirebaseAuthException e) {
+        print('[FirebaseAuth] Verification failed: ${e.code} — ${e.message}');
+        if (mounted) {
+          setState(() => _otpLoading = false);
+          _snack(e.message ?? 'OTP bhejne mein error aaya. Dobara try karo.');
+        }
+      },
+      codeSent: (String verificationId, int? resendToken) {
+        print('[FirebaseAuth] Code sent. verificationId: $verificationId');
+        if (mounted) {
+          setState(() => _otpLoading = false);
+          context.push('/otp', extra: {
+            'verificationId': verificationId,
+            'phone': fullPhone,
+          });
+        }
+      },
+      codeAutoRetrievalTimeout: (String verificationId) {
+        print('[FirebaseAuth] Auto-retrieval timeout.');
+      },
+    );
   }
 
   // ── Google Sign-In ────────────────────────────────────────
