@@ -4,6 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:go_router/go_router.dart';
 import '../../theme/app_theme.dart';
 import '../../services/google_auth_service.dart';
+import '../../models/models.dart';
 import '../../services/language_service.dart';
 
 class PhoneLoginScreen extends StatefulWidget {
