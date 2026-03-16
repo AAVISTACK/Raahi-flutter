@@ -44,6 +44,7 @@ void main() async {
   // Only Firebase must block before runApp — auth state unavailable without it.
   // Everything else (token, language, ads) loads after first frame.
   await Firebase.initializeApp();
+  ApiService().init(); // init Dio immediately — token loaded in background
 
   await SystemChrome.setPreferredOrientations([
     DeviceOrientation.portraitUp,
@@ -64,7 +65,6 @@ void main() async {
       ApiService().loadToken(),
       LanguageService().loadSavedLanguage(),
     ]);
-    ApiService().init();
     AdService.initialize().then((_) {
       AdService().loadInterstitial();
       AdService().loadRewarded();
