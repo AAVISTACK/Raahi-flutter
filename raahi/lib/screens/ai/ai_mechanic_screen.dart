@@ -4,6 +4,9 @@
 // Smooth fade/slide transitions between steps
 // ============================================================
 import 'dart:async';
+import 'dart:convert';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
 import 'package:speech_to_text/speech_to_text.dart';
 import 'package:flutter_tts/flutter_tts.dart';
@@ -155,61 +158,100 @@ class _AiMechanicScreenState extends State<AiMechanicScreen>
   }
 
   // ── Analyze → step 2 → step 3 ────────────────────────────
-  Future<void> _analyze() async {
-    final text = _textCtrl.text.trim();
-    if (text.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-        content: Text('Please describe your car problem first')));
-      return;
-    }
-    if (_freeMessages <= 0) {
-      setState(() => _showRewardedButton = true);
-      return;
-    }
-    _freeMessages--;
+    Future<void> _analyze() async {
+      final text = _textCtrl.text.trim();
+      if (text.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+          content: Text('Please describe your car problem first')));
+        return;
+      }
+      if (_freeMessages <= 0) {
+        setState(() => _showRewardedButton = true);
+        return;
+      }
+      _freeMessages--;
 
-    // Transition → processing
-    await _transCtrl.forward();
-    setState(() => _step = _Step.processing);
-    _transCtrl.reverse();
-
-    try {
-      final reply = await ApiService().sendAiMessageWithFallback(
-        sessionId: _sessionId,
-        message: text,
-        history: [],
-        vehicleType: 'car',
-        languageCode: _lang.currentCode,
-      );
-
-      // Parse response into structured result
-      final result = _DiagResult(
-        possibleIssue: _extractSection(reply, 'issue') ?? reply,
-        urgency: _extractUrgency(reply),
-        suggestedFix: _extractSection(reply, 'fix') ?? 'Consult a mechanic for further inspection.',
-      );
-
-      // Transition → result
+      // Transition → processing
       await _transCtrl.forward();
-      setState(() { _step = _Step.result; _result = result; });
+      setState(() => _step = _Step.processing);
       _transCtrl.reverse();
 
-      // Stagger result cards
-      for (int i = 0; i < 3; i++) {
-        await Future.delayed(Duration(milliseconds: 80 + i * 150));
-        if (mounted) _resultCtrls[i].forward();
-      }
-    } catch (e) {
-      if (mounted) {
-        setState(() {
-          _step = _Step.input;
-          _hasError = true;
-          _errorMsg = 'Network error. Internet connection check karo aur dobara try karo.';
-        });
+      try {
+        // Check if user has a valid auth token
+        final user = FirebaseAuth.instance.currentUser;
+        final authToken = await user?.getIdToken();
+
+        String reply;
+        if (authToken == null || authToken.isEmpty) {
+          // No token — call Gemini directly
+          reply = await _callGeminiDirect(text);
+        } else {
+          // Has token — use backend with Gemini fallback
+          reply = await ApiService().sendAiMessageWithFallback(
+            sessionId: _sessionId,
+            message: text,
+            history: [],
+            vehicleType: 'car',
+            languageCode: _lang.currentCode,
+          );
+        }
+
+        // Parse response into structured result
+        final result = _DiagResult(
+          possibleIssue: _extractSection(reply, 'issue') ?? reply,
+          urgency: _extractUrgency(reply),
+          suggestedFix: _extractSection(reply, 'fix') ?? 'Consult a mechanic for further inspection.',
+        );
+
+        // Transition → result
+        await _transCtrl.forward();
+        setState(() { _step = _Step.result; _result = result; });
+        _transCtrl.reverse();
+
+        // Stagger result cards
+        for (int i = 0; i < 3; i++) {
+          await Future.delayed(Duration(milliseconds: 80 + i * 150));
+          if (mounted) _resultCtrls[i].forward();
+        }
+      } catch (e) {
+        if (mounted) {
+          setState(() {
+            _step = _Step.input;
+            _hasError = true;
+            _errorMsg = 'Network error. Internet connection check karo aur dobara try karo.';
+          });
+        }
       }
     }
-  }
 
+    // ── Direct Gemini call (no auth required) ─────────────────
+    Future<String> _callGeminiDirect(String message) async {
+      const geminiUrl =
+          'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent'
+          '?key=AIzaSyC0hmuQibdcPsQStTyofhhHw86HWs4ZD7k';
+      final response = await http.post(
+        Uri.parse(geminiUrl),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'contents': [
+            {
+              'parts': [
+                {
+                  'text':
+                      'You are Raahi AI mechanic. User says: $message. Give helpful car advice in Hindi.'
+                }
+              ]
+            }
+          ],
+        }),
+      );
+      if (response.statusCode != 200) {
+        throw Exception('Gemini error: ${response.statusCode}');
+      }
+      final data = jsonDecode(response.body) as Map<String, dynamic>;
+      return data['candidates'][0]['content']['parts'][0]['text'] as String;
+    }
+  
   String? _extractSection(String text, String key) {
     final lines = text.split('\n');
     if (key == 'issue') {
