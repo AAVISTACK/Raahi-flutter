@@ -128,7 +128,7 @@ class _SplashScreenState extends State<SplashScreen>
     });
 
     // ── Navigate after 1 800 ms — check FirebaseAuth ─────────
-    Future.delayed(const Duration(milliseconds: 1800), () {
+    Future.delayed(const Duration(milliseconds: 1400), () {
       if (!mounted) return;
       final user = FirebaseAuth.instance.currentUser;
       if (user != null) {
