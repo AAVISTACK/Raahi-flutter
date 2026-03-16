@@ -12,15 +12,25 @@
           "package_name": "com.raahi.app"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "107641072718-sngrdnjrk8gltcaddinatrtr4ggr55mv.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
-          "current_key": "FIREBASE_KEY"
+          "current_key": "AIzaSyC0hmuQibdcPsQStTyofhhHw86HWs4ZD7k"
         }
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "107641072718-sngrdnjrk8gltcaddinatrtr4ggr55mv.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
         }
       }
     }
