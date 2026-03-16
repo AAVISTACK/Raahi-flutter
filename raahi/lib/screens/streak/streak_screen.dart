@@ -70,7 +70,21 @@ class _StreakScreenState extends State<StreakScreen>
         _showMilestone(res['milestone'], res['streak']);
       }
     } catch (_) {
-      setState(() => _checkingIn = false);
+      // Backend unreachable — update locally so user sees feedback
+      final currentStreak = (_streakData?['streak'] ?? 0) as int;
+      final currentLongest = (_streakData?['longest'] ?? 0) as int;
+      final newStreak = currentStreak + 1;
+      setState(() {
+        _checkingIn    = false;
+        _justCheckedIn = true;
+        _streakData = {
+          ..._streakData ?? {},
+          'streak':         newStreak,
+          'longest':        newStreak > currentLongest ? newStreak : currentLongest,
+          'checkedInToday': true,
+        };
+      });
+      _celebCtrl.forward(from: 0);
     }
   }
 

@@ -196,10 +196,10 @@ class _MechanicsMapScreenState extends State<MechanicsMapScreen>
           child: _buildFloatingButtons(),
         ),
 
-        // ── SOS BUTTON (bottom-right) ─────────────────────────
+        // ── SOS BUTTON (bottom-left) ─────────────────────────
         Positioned(
-          right: 16,
-          bottom: _mechanics.isNotEmpty ? 140 : 24,
+          left: 16,
+          bottom: 24,
           child: _buildSosButton(),
         ),
 
