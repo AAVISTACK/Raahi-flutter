@@ -8,6 +8,7 @@ import 'package:go_router/go_router.dart';
 import '../../theme/app_theme.dart';
 import '../../models/models.dart';
 import '../../services/language_service.dart';
+import '../../services/location_service.dart';
 import '../../widgets/ad_banner_widget.dart';
 import '../../widgets/ui_components.dart';
 import '../community/community_feed_screen.dart';
@@ -52,6 +53,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     _runStaggered();
     NotificationService().init(); // FCM init
     NotificationService().subscribeToTips(); // Daily tips
+    LocationService().requestPermission(); // Request location permission here, not on splash
   }
 
   Future<void> _runStaggered() async {

@@ -199,7 +199,7 @@ class _MechanicsMapScreenState extends State<MechanicsMapScreen>
         // ── SOS BUTTON (bottom-left) ─────────────────────────
         Positioned(
           left: 16,
-          bottom: 24,
+          bottom: 120,
           child: _buildSosButton(),
         ),
 
