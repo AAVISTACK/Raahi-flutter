@@ -24,7 +24,7 @@ class AppConstants {
   // ✅ 4. GEMINI / OPENAI KEY  →  Line 29
   //    https://aistudio.google.com/app/apikey
   // ══════════════════════════════════════════════════════════
-  static const String geminiKey = 'AIzaSyCUgmWUgies5Hlg079-7vfxT-IPWLMTloA'; // ← LINE 29
+  static const String geminiKey = 'AIzaSyC0hmuQibdcPsQStTyofhhHw86HWs4ZD7k'; // ← LINE 29
 
   // ══════════════════════════════════════════════════════════
   // ✅ 5. ADMOB IDs  →  Lines 34-50
