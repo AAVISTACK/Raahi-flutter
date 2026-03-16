@@ -72,12 +72,12 @@ dev_dependencies:
 # FIX: Use app_icon_fg.png (foreground-only, centered in safe zone) for adaptive
 # icon so it doesn't get cut off. app_icon.png remains the legacy fallback icon.
 flutter_launcher_icons:
-  android: "launcher_icon"
+  android: "ic_launcher"
   ios: false
   image_path: "assets/icons/app_icon.png"
   min_sdk_android: 21
   adaptive_icon_background: "#1A237E"
-  adaptive_icon_foreground: "assets/icons/app_icon_fg.png"
+  adaptive_icon_foreground: "assets/icons/app_icon.png"
   web:
     generate: false
   windows:
