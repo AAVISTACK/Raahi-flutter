@@ -9,6 +9,8 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  flutter_localizations:
+    sdk: flutter
 
   # State Management
   flutter_riverpod: ^2.4.9
@@ -55,7 +57,6 @@ dependencies:
   # Utils
   intl: ^0.19.0
   url_launcher: ^6.2.5
-  flutter_native_splash: ^2.3.11
   connectivity_plus: ^6.0.2
   vibration: ^1.8.4
 
@@ -83,21 +84,6 @@ flutter_launcher_icons:
     generate: false
   macos:
     generate: false
-
-# ─── Splash Screen ─────────────────────────────────────────────────────────────
-flutter_native_splash:
-  # Matches Flutter SplashScreen background — seamless transition
-  color: "#1A2A6C"
-  color_dark: "#1A2A6C"
-  image: assets/icons/app_icon.png
-  image_dark: assets/icons/app_icon.png
-  android_12:
-    color: "#1A2A6C"
-    color_dark: "#1A2A6C"
-    image: assets/icons/app_icon.png
-  fullscreen: true
-  android: true
-  ios: false
 
 flutter:
   uses-material-design: true

@@ -4,6 +4,7 @@ import 'services/api_service.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'services/ad_service.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'theme/app_theme.dart';
@@ -39,15 +40,9 @@ import 'screens/shop/shop_screen.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // FIX: Run Firebase init + token/language loading in parallel.
-  // Previously these ran sequentially, blocking the UI for ~3-5 seconds
-  // before runApp() was even called.
-  await Future.wait([
-    Firebase.initializeApp(),
-    ApiService().loadToken(),
-    LanguageService().loadSavedLanguage(),
-  ]);
-  ApiService().init();
+  // Only Firebase must block before runApp — auth state unavailable without it.
+  // Everything else (token, language, ads) loads after first frame.
+  await Firebase.initializeApp();
 
   await SystemChrome.setPreferredOrientations([
     DeviceOrientation.portraitUp,
@@ -59,17 +54,20 @@ void main() async {
     statusBarIconBrightness: Brightness.light,
   ));
 
-  // FIX: runApp() first so the UI appears immediately (~1-2s instead of 12s).
-  // AdMob init is slow (3-8s) and does NOT need to block the first frame.
-  // We initialize it after the app is rendered using a post-frame callback.
+  // runApp() immediately after Firebase — UI appears in ~1s
   runApp(const ProviderScope(child: RaahiApp()));
 
-  // FIX: AdMob init moved AFTER runApp — runs in background while UI is visible.
-  // Preloading ads also happens here, non-blocking.
+  // Everything else loads in background — non-blocking
   WidgetsBinding.instance.addPostFrameCallback((_) async {
-    await AdService.initialize();
-    AdService().loadInterstitial();
-    AdService().loadRewarded();
+    await Future.wait([
+      ApiService().loadToken(),
+      LanguageService().loadSavedLanguage(),
+    ]);
+    ApiService().init();
+    AdService.initialize().then((_) {
+      AdService().loadInterstitial();
+      AdService().loadRewarded();
+    });
   });
 }
 
@@ -146,20 +144,33 @@ final _router = GoRouter(
   ],
 );
 
+// ── RaahiApp: listens to LanguageService so MaterialApp rebuilds on lang change ──
 class RaahiApp extends StatelessWidget {
   const RaahiApp({super.key});
   @override
   Widget build(BuildContext context) {
-    return MaterialApp.router(
-      title: 'Raahi',
-      debugShowCheckedModeBanner: false,
-      theme: AppTheme.darkTheme,
-      routerConfig: _router,
+    return ListenableBuilder(
+      listenable: LanguageService(),
+      builder: (context, _) => MaterialApp.router(
+        title: 'Raahi',
+        debugShowCheckedModeBanner: false,
+        theme: AppTheme.darkTheme,
+        locale: Locale(LanguageService().currentCode),
+        supportedLocales: LanguageService.supported
+            .map((l) => Locale(l.code))
+            .toList(),
+        localizationsDelegates: const [
+          GlobalMaterialLocalizations.delegate,
+          GlobalWidgetsLocalizations.delegate,
+          GlobalCupertinoLocalizations.delegate,
+        ],
+        routerConfig: _router,
+      ),
     );
   }
 }
 
-// ── Bottom Nav Shell (5 tabs now) ────────────────────────────
+// ── Bottom Nav Shell ──────────────────────────────────────────
 class MainShell extends StatefulWidget {
   final Widget child;
   const MainShell({super.key, required this.child});
@@ -221,7 +232,6 @@ class _PremiumBottomNav extends StatelessWidget {
               final item = e.value;
               final selected = i == currentIndex;
 
-              // Center item (AI Help) gets special treatment
               if (i == 2) {
                 return Expanded(
                   child: GestureDetector(
