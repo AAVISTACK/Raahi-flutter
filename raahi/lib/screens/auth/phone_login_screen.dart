@@ -1,106 +1,100 @@
+// ============================================================
+// lib/screens/auth/phone_login_screen.dart  — Refactored v2
+// Fix: ZERO setState / bool _isLoading — pure Riverpod
+// Fix: Errors surfaced from provider, never swallowed
+// Fix: Network error shown explicitly (no silent spinners)
+// ============================================================
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import '../../theme/app_theme.dart';
-import '../../services/google_auth_service.dart';
-import '../../models/models.dart';
-import '../../services/language_service.dart';
+import '../../../providers/auth_provider.dart';
+import '../../../services/language_service.dart';
+import '../../../theme/app_theme.dart';
+import '../../../services/google_auth_service.dart';
 
-class PhoneLoginScreen extends StatefulWidget {
+class PhoneLoginScreen extends ConsumerStatefulWidget {
   const PhoneLoginScreen({super.key});
+
   @override
-  State<PhoneLoginScreen> createState() => _PhoneLoginScreenState();
+  ConsumerState<PhoneLoginScreen> createState() => _PhoneLoginScreenState();
 }
 
-class _PhoneLoginScreenState extends State<PhoneLoginScreen> {
-  final _phoneCtrl    = TextEditingController();
-  final _lang         = LanguageService();
-  bool _otpLoading    = false;
-  bool _googleLoading = false;
+class _PhoneLoginScreenState extends ConsumerState<PhoneLoginScreen> {
+  final _phoneCtrl = TextEditingController();
+  final _lang = LanguageService();
 
-  // ── Phone OTP via Firebase ─────────────────────────────────────
+  @override
+  void dispose() {
+    _phoneCtrl.dispose();
+    super.dispose();
+  }
+
+  // ── Send OTP ───────────────────────────────────────────────
+  // Business logic is entirely in AuthNotifier.sendOtp()
+  // This method only validates format and delegates.
+
   Future<void> _sendOtp() async {
     final phone = _phoneCtrl.text.trim();
-    if (phone.length != 10) {
+    if (phone.length != 10 || !RegExp(r'^\d{10}$').hasMatch(phone)) {
       _snack(_lang.t('invalid_phone'));
       return;
     }
-    setState(() => _otpLoading = true);
-    final fullPhone = '+91$phone';
-    print('[FirebaseAuth] Sending OTP to $fullPhone...');
-
-    await FirebaseAuth.instance.verifyPhoneNumber(
-      phoneNumber: fullPhone,
-      timeout: const Duration(seconds: 60),
-      verificationCompleted: (PhoneAuthCredential credential) async {
-        // Auto-retrieval or instant verification (rare on real devices)
-        print('[FirebaseAuth] Auto-verification completed.');
-        await FirebaseAuth.instance.signInWithCredential(credential);
-        if (mounted) context.go('/home');
-      },
-      verificationFailed: (FirebaseAuthException e) {
-        print('[FirebaseAuth] Verification failed: ${e.code} — ${e.message}');
-        if (mounted) {
-          setState(() => _otpLoading = false);
-          _snack(e.message ?? 'OTP bhejne mein error aaya. Dobara try karo.');
-        }
-      },
-      codeSent: (String verificationId, int? resendToken) {
-        print('[FirebaseAuth] Code sent. verificationId: $verificationId');
-        if (mounted) {
-          setState(() => _otpLoading = false);
-          context.push('/otp', extra: {
-            'verificationId': verificationId,
-            'phone': fullPhone,
-          });
-        }
-      },
-      codeAutoRetrievalTimeout: (String verificationId) {
-        print('[FirebaseAuth] Auto-retrieval timeout.');
-      },
-    );
+    await ref.read(authProvider.notifier).sendOtp(phone);
   }
 
-  // ── Google Sign-In ────────────────────────────────────────
   Future<void> _signInWithGoogle() async {
-    setState(() => _googleLoading = true);
-    try {
-      final result = await GoogleAuthService().signIn();
-      if (!mounted) return;
-      if (result.isNewUser) {
-        context.pushReplacement('/profile-setup', extra: {
-          'name': result.name,
-          'email': result.email,
-          'photo': result.photoUrl,
-          'via': 'google',
-        });
-      } else {
-        context.go('/home');
-      }
-    } on GoogleSignInCancelledException {
-      // Silent — user ne cancel kiya
-    } catch (e) {
-      _snack(e.toString().replaceAll('Exception: ', ''));
-    } finally {
-      if (mounted) setState(() => _googleLoading = false);
-    }
+    await ref.read(authProvider.notifier).signInWithGoogle();
   }
 
   void _snack(String msg) {
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-      content: Text(msg),
-      backgroundColor: AppTheme.cardBg,
-      behavior: SnackBarBehavior.floating,
-    ));
+    ScaffoldMessenger.of(context)
+      ..clearSnackBars()
+      ..showSnackBar(SnackBar(
+        content: Text(msg),
+        backgroundColor: AppTheme.cardBg,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppTheme.r12),
+        ),
+      ));
   }
 
   @override
-  void dispose() { _phoneCtrl.dispose(); super.dispose(); }
-
-  @override
   Widget build(BuildContext context) {
+    // ── Listen to auth state for navigation & errors ──────────
+    ref.listen<AsyncValue<AuthState>>(authProvider, (prev, next) {
+      next.whenData((state) {
+        // Show errors from the provider — replaces try/catch in UI
+        if (state.errorMessage != null) {
+          _snack(state.errorMessage!);
+        }
+
+        // Navigate when OTP was sent
+        if (state.status == AuthStatus.phoneEntered &&
+            state.verificationId != null) {
+          context.push('/otp', extra: {
+            'verificationId': state.verificationId!,
+            'phone': state.phone!,
+          });
+        }
+
+        // Navigate on success — GoRouter redirect handles this,
+        // but we can also push imperatively if needed
+        // GoRouter's redirect in app_router.dart handles the actual routing
+      });
+    });
+
+    // ── Read loading state from provider (no local bool) ──────
+    final authAsync = ref.watch(authProvider);
+    final isLoading = authAsync.isLoading ||
+        authAsync.maybeWhen(
+          data: (s) => s.status == AuthStatus.initial,
+          orElse: () => false,
+        );
+
     return ListenableBuilder(
       listenable: _lang,
       builder: (context, _) => Scaffold(
@@ -111,129 +105,107 @@ class _PhoneLoginScreenState extends State<PhoneLoginScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _buildLanguageSelector(),
+                _LanguageSelector(lang: _lang),
                 const SizedBox(height: 36),
 
-                Container(
-                  width: 64, height: 64,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    gradient: const LinearGradient(
-                        colors: [AppTheme.saffron, AppTheme.saffronDark]),
-                    boxShadow: [BoxShadow(
-                      color: AppTheme.saffron.withOpacity(0.3),
-                      blurRadius: 20, spreadRadius: 2)],
+                // ── Hero logo ──────────────────────────────────
+                Center(
+                  child: Column(
+                    children: [
+                      Container(
+                        width: 72,
+                        height: 72,
+                        decoration: BoxDecoration(
+                          gradient: AppTheme.primaryGradient,
+                          borderRadius: BorderRadius.circular(AppTheme.r20),
+                          boxShadow: AppTheme.primaryShadow,
+                        ),
+                        child: const Icon(
+                          Icons.directions_car_rounded,
+                          color: Colors.white,
+                          size: 36,
+                        ),
+                      ),
+                      const SizedBox(height: 20),
+                      Text(
+                        'Raahi',
+                        style: TextStyle(
+                          fontFamily: 'Rajdhani',
+                          fontSize: 36,
+                          fontWeight: FontWeight.w800,
+                          color: AppTheme.textPrimary,
+                          letterSpacing: 1.2,
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        _lang.t('highway_par_hamesha_saath'),
+                        style: TextStyle(
+                          color: AppTheme.textSecondary,
+                          fontSize: 13,
+                        ),
+                      ),
+                    ],
                   ),
-                  child: const Icon(Icons.directions_car_rounded,
-                      color: Colors.white, size: 32),
                 ),
-                const SizedBox(height: 28),
+                const SizedBox(height: 48),
 
-                Text(_lang.t('welcome_title'),
-                    style: const TextStyle(fontSize: 30, fontWeight: FontWeight.w800,
-                        color: AppTheme.textPrimary, height: 1.2)),
-                const SizedBox(height: 8),
-                Text(_lang.t('welcome_sub'),
-                    style: const TextStyle(color: AppTheme.textSecondary, fontSize: 14)),
-                const SizedBox(height: 36),
-
-                Text(_lang.t('mobile_number'),
-                    style: const TextStyle(color: AppTheme.textSecondary,
-                        fontSize: 13, fontWeight: FontWeight.w600)),
-                const SizedBox(height: 8),
-                Row(children: [
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 16),
-                    decoration: BoxDecoration(
-                      color: AppTheme.cardBg,
-                      borderRadius: BorderRadius.circular(10),
-                      border: Border.all(color: AppTheme.cardBorder),
-                    ),
-                    child: const Text('+91',
-                        style: TextStyle(color: AppTheme.textPrimary,
-                            fontSize: 16, fontWeight: FontWeight.w600)),
+                // ── Phone input ────────────────────────────────
+                Text(
+                  _lang.t('enter_mobile_number'),
+                  style: const TextStyle(
+                    color: AppTheme.textSecondary,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w500,
                   ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: TextField(
-                      controller: _phoneCtrl,
-                      keyboardType: TextInputType.phone,
-                      maxLength: 10,
-                      inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                      style: const TextStyle(color: AppTheme.textPrimary,
-                          fontSize: 18, letterSpacing: 2),
-                      decoration: InputDecoration(
-                          hintText: _lang.t('phone_hint'), counterText: ''),
-                    ),
-                  ),
-                ]),
+                ),
+                const SizedBox(height: 10),
+                _PhoneInputField(
+                  controller: _phoneCtrl,
+                  onSubmitted: (_) => _sendOtp(),
+                ),
                 const SizedBox(height: 20),
 
-                SizedBox(
-                  width: double.infinity, height: 54,
-                  child: ElevatedButton(
-                    onPressed: _otpLoading ? null : _sendOtp,
-                    child: _otpLoading
-                        ? const SizedBox(width: 24, height: 24,
-                            child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                        : Text(_lang.t('btn_send_otp'),
-                            style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w700)),
-                  ),
+                // ── OTP Button ─────────────────────────────────
+                _OtpButton(
+                  isLoading: isLoading,
+                  label: _lang.t('send_otp'),
+                  onTap: _sendOtp,
                 ),
+                const SizedBox(height: 20),
 
-                const SizedBox(height: 28),
+                // ── Divider ────────────────────────────────────
                 Row(children: [
                   const Expanded(child: Divider(color: AppTheme.cardBorder)),
                   Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 14),
-                    child: Text(_lang.t('or_divider'),
-                        style: const TextStyle(color: AppTheme.textMuted,
-                            fontSize: 11, letterSpacing: 1, fontWeight: FontWeight.w600)),
+                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                    child: Text(
+                      _lang.t('or'),
+                      style: const TextStyle(color: AppTheme.textMuted),
+                    ),
                   ),
                   const Expanded(child: Divider(color: AppTheme.cardBorder)),
                 ]),
-                const SizedBox(height: 28),
+                const SizedBox(height: 20),
 
-                SizedBox(
-                  width: double.infinity, height: 54,
-                  child: OutlinedButton(
-                    onPressed: _googleLoading ? null : _signInWithGoogle,
-                    style: OutlinedButton.styleFrom(
-                      side: const BorderSide(color: AppTheme.cardBorder, width: 1.5),
-                      backgroundColor: AppTheme.cardBg,
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12)),
-                    ),
-                    child: _googleLoading
-                        ? const SizedBox(width: 22, height: 22,
-                            child: CircularProgressIndicator(
-                                color: AppTheme.saffron, strokeWidth: 2.5))
-                        : Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              _GoogleLogo(),
-                              const SizedBox(width: 12),
-                              Text(_lang.t('btn_google_login'),
-                                  style: const TextStyle(color: AppTheme.textPrimary,
-                                      fontSize: 16, fontWeight: FontWeight.w600)),
-                            ],
-                          ),
-                  ),
+                // ── Google Sign-In ─────────────────────────────
+                _GoogleButton(
+                  isLoading: isLoading,
+                  label: _lang.t('continue_with_google'),
+                  onTap: _signInWithGoogle,
                 ),
-
                 const SizedBox(height: 32),
+
+                // ── Terms ──────────────────────────────────────
                 Center(
-                  child: TextButton(
-                    onPressed: () => context.push('/mechanic-register'),
-                    child: Text(_lang.t('mechanic_register_link'),
-                        style: const TextStyle(color: AppTheme.cyan, fontSize: 13)),
+                  child: Text(
+                    _lang.t('by_continuing_you_agree'),
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      color: AppTheme.textMuted,
+                      fontSize: 11,
+                    ),
                   ),
-                ),
-                const SizedBox(height: 8),
-                Center(
-                  child: Text(_lang.t('terms_note'),
-                      textAlign: TextAlign.center,
-                      style: const TextStyle(color: AppTheme.textMuted, fontSize: 11)),
                 ),
               ],
             ),
@@ -242,82 +214,194 @@ class _PhoneLoginScreenState extends State<PhoneLoginScreen> {
       ),
     );
   }
+}
 
-  Widget _buildLanguageSelector() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(_lang.t('choose_language'),
-            style: const TextStyle(color: AppTheme.textMuted, fontSize: 11,
-                letterSpacing: 0.8, fontWeight: FontWeight.w600)),
-        const SizedBox(height: 10),
-        SingleChildScrollView(
-          scrollDirection: Axis.horizontal,
-          child: Row(
-            children: LanguageService.supported.map((lang) {
-              final isSelected = _lang.currentLanguage == lang;
-              return GestureDetector(
-                onTap: () => _lang.setLanguage(lang),
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 200),
-                  margin: const EdgeInsets.only(right: 8),
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                  decoration: BoxDecoration(
-                    color: isSelected ? AppTheme.saffron : AppTheme.cardBg,
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(
-                      color: isSelected ? AppTheme.saffron : AppTheme.cardBorder,
-                      width: 1.5),
-                    boxShadow: isSelected ? [BoxShadow(
-                        color: AppTheme.saffron.withOpacity(0.3), blurRadius: 8)] : null,
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(lang.flag, style: const TextStyle(fontSize: 14)),
-                      const SizedBox(width: 6),
-                      Text(lang.displayName, style: TextStyle(
-                        color: isSelected ? Colors.white : AppTheme.textSecondary,
-                        fontSize: 13,
-                        fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-                      )),
-                    ],
-                  ),
-                ),
-              );
-            }).toList(),
+// ── Extracted Widgets (pure, no business logic) ───────────────
+
+class _PhoneInputField extends StatelessWidget {
+  final TextEditingController controller;
+  final ValueChanged<String>? onSubmitted;
+
+  const _PhoneInputField({required this.controller, this.onSubmitted});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        color: AppTheme.cardBg,
+        borderRadius: BorderRadius.circular(AppTheme.r14),
+        border: Border.all(color: AppTheme.cardBorder),
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
+            decoration: BoxDecoration(
+              border: Border(
+                right: BorderSide(color: AppTheme.cardBorder),
+              ),
+            ),
+            child: const Text(
+              '+91',
+              style: TextStyle(
+                color: AppTheme.textPrimary,
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
           ),
-        ),
-      ],
+          Expanded(
+            child: TextField(
+              controller: controller,
+              keyboardType: TextInputType.phone,
+              maxLength: 10,
+              style: const TextStyle(
+                color: AppTheme.textPrimary,
+                fontSize: 18,
+                fontWeight: FontWeight.w600,
+                letterSpacing: 2,
+              ),
+              decoration: const InputDecoration(
+                hintText: '98765 43210',
+                hintStyle: TextStyle(
+                  color: AppTheme.textMuted,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w400,
+                  letterSpacing: 1,
+                ),
+                border: InputBorder.none,
+                contentPadding: EdgeInsets.symmetric(horizontal: 16),
+                counterText: '',
+              ),
+              inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+              onSubmitted: onSubmitted,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
 
-class _GoogleLogo extends StatelessWidget {
+class _OtpButton extends StatelessWidget {
+  final bool isLoading;
+  final String label;
+  final VoidCallback onTap;
+
+  const _OtpButton({
+    required this.isLoading,
+    required this.label,
+    required this.onTap,
+  });
+
   @override
-  Widget build(BuildContext context) =>
-      SizedBox(width: 22, height: 22, child: CustomPaint(painter: _GooglePainter()));
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: double.infinity,
+      height: 54,
+      child: ElevatedButton(
+        onPressed: isLoading ? null : onTap,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: AppTheme.primary,
+          disabledBackgroundColor: AppTheme.primary.withOpacity(0.5),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppTheme.r14),
+          ),
+          elevation: 0,
+        ),
+        child: isLoading
+            ? const SizedBox(
+                width: 22,
+                height: 22,
+                child: CircularProgressIndicator(
+                  color: Colors.white,
+                  strokeWidth: 2.5,
+                ),
+              )
+            : Text(
+                label,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: 0.5,
+                ),
+              ),
+      ),
+    );
+  }
 }
 
-class _GooglePainter extends CustomPainter {
+class _GoogleButton extends StatelessWidget {
+  final bool isLoading;
+  final String label;
+  final VoidCallback onTap;
+
+  const _GoogleButton({
+    required this.isLoading,
+    required this.label,
+    required this.onTap,
+  });
+
   @override
-  void paint(Canvas canvas, Size size) {
-    final cx = size.width / 2; final cy = size.height / 2; final r = size.width / 2;
-    final colors = [const Color(0xFF4285F4), const Color(0xFF34A853),
-                    const Color(0xFFFBBC05), const Color(0xFFEA4335)];
-    for (int i = 0; i < 4; i++) {
-      canvas.drawArc(
-        Rect.fromCircle(center: Offset(cx, cy), radius: r * 0.75),
-        ([-90.0, 0.0, 90.0, 180.0][i]) * 3.14159 / 180,
-        90 * 3.14159 / 180, false,
-        Paint()..color = colors[i]..style = PaintingStyle.stroke..strokeWidth = size.width * 0.2,
-      );
-    }
-    canvas.drawCircle(Offset(cx, cy), r * 0.55, Paint()..color = AppTheme.cardBg);
-    canvas.drawLine(Offset(cx, cy), Offset(cx + r * 0.72, cy),
-      Paint()..color = const Color(0xFF4285F4)..style = PaintingStyle.stroke
-              ..strokeWidth = size.width * 0.18..strokeCap = StrokeCap.round);
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: double.infinity,
+      height: 54,
+      child: OutlinedButton.icon(
+        onPressed: isLoading ? null : onTap,
+        icon: isLoading
+            ? const SizedBox(
+                width: 20,
+                height: 20,
+                child: CircularProgressIndicator(strokeWidth: 2),
+              )
+            : const Icon(Icons.g_mobiledata, size: 28),
+        label: Text(label),
+        style: OutlinedButton.styleFrom(
+          foregroundColor: AppTheme.textPrimary,
+          side: const BorderSide(color: AppTheme.cardBorder),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppTheme.r14),
+          ),
+        ),
+      ),
+    );
   }
+}
+
+class _LanguageSelector extends StatelessWidget {
+  final LanguageService lang;
+  const _LanguageSelector({required this.lang});
+
   @override
-  bool shouldRepaint(_) => false;
+  Widget build(BuildContext context) {
+    return Wrap(
+      spacing: 8,
+      children: LanguageService.supported.map((l) {
+        final isSelected = lang.currentLanguage == l;
+        return GestureDetector(
+          onTap: () => lang.setLanguage(l),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            decoration: BoxDecoration(
+              color: isSelected ? AppTheme.primary : AppTheme.cardBg,
+              borderRadius: BorderRadius.circular(AppTheme.r8),
+              border: Border.all(
+                color: isSelected ? AppTheme.primary : AppTheme.cardBorder,
+              ),
+            ),
+            child: Text(
+              '${l.flag} ${l.displayName}',
+              style: TextStyle(
+                color: isSelected ? Colors.white : AppTheme.textSecondary,
+                fontSize: 12,
+                fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+              ),
+            ),
+          ),
+        );
+      }).toList(),
+    );
+  }
 }
