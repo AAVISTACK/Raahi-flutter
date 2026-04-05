@@ -309,6 +309,7 @@ final authStatusProvider = Provider<AuthStatus>((ref) {
     data: (s) => s.status,
     loading: () => AuthStatus.initial,
     error: (_, __) => AuthStatus.unauthenticated,
+    orElse: () => AuthStatus.initial,
   );
 });
 
@@ -325,3 +326,4 @@ final currentRoleProvider = Provider<String?>((ref) {
     orElse: () => null,
   );
 });
+
