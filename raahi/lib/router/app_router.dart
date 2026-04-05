@@ -153,17 +153,17 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: Routes.otp,
         builder: (_, state) {
-          final extra = state.extra as Map<String, dynamic>;
+          final extra = (state.extra as Map<String, dynamic>?) ?? const <String, dynamic>{};
           return OtpScreen(
-            verificationId: extra['verificationId'] as String,
-            phone: extra['phone'] as String,
+            verificationId: (extra['verificationId'] as String?) ?? '',
+            phone: (extra['phone'] as String?) ?? '',
           );
         },
       ),
       GoRoute(
         path: Routes.profileSetup,
         builder: (_, state) => ProfileSetupScreen(
-          extra: state.extra as Map<String, dynamic>?,
+          extra: state.extra as Map<String, dynamic>?,  // Already nullable — safe
         ),
       ),
 
@@ -314,16 +314,4 @@ class _ErrorPage extends StatelessWidget {
 // }
 // ─────────────────────────────────────────────────────────────
 
-// These imports are needed — add them to your barrel exports:
-// ignore: unused_import
-export 'package:raahi/screens/splash_screen.dart';
-// ignore: unused_import
-export 'package:raahi/screens/onboarding_screen.dart';
-// ignore: unused_import
-export 'package:raahi/screens/auth/phone_login_screen.dart';
-// ignore: unused_import
-export 'package:raahi/screens/auth/otp_screen.dart';
-// ignore: unused_import
-export 'package:raahi/screens/auth/profile_setup_screen.dart';
-// ignore: unused_import
-export 'package:raahi/screens/home/home_screen.dart';
+// Router is fully configured above.
