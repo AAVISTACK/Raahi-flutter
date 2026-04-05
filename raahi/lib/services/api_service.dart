@@ -3,11 +3,13 @@
 // Fix: All API errors now throw ApiException (never swallowed)
 // Fix: baseUrl reads from environment, not hardcoded constants
 // Fix: clearToken() added for sign-out
+// Fix: Added domain-specific methods (createJob, getJob, etc.)
 // ============================================================
 
 import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../models/models.dart';
 
 // ── ApiException — strongly typed error surface ───────────────
 // UI catches this instead of seeing silent loading spinners
@@ -208,5 +210,95 @@ class ApiService {
       options: Options(headers: {'x-admin-secret': secret}),
     );
     return res.data ?? {};
+  }
+
+  // ── Domain Methods ─────────────────────────────────────────
+  // All methods call the real backend endpoint.
+  // Screens already wrap calls in try/catch — no double-handling needed.
+
+  /// Update authenticated user's profile fields.
+  Future<UserModel> updateProfile(Map<String, dynamic> data) async {
+    final res = await put('/auth/profile', data);
+    final userJson = (res['user'] ?? res) as Map<String, dynamic>;
+    return UserModel.fromJson(userJson);
+  }
+
+  /// Driver creates a new help job with their current location + problem.
+  Future<HelpJob> createJob({
+    required double lat,
+    required double lng,
+    required String problemType,
+    String? problemDesc,
+    required double rewardAmount,
+  }) async {
+    final res = await post('/jobs', {
+      'lat': lat,
+      'lng': lng,
+      'problem_type': problemType,
+      'problem_desc': problemDesc ?? '',
+      'reward_amount': rewardAmount,
+    });
+    final jobJson = (res['job'] ?? res) as Map<String, dynamic>;
+    return HelpJob.fromJson(jobJson);
+  }
+
+  /// Fetch a single job by ID (for polling on active-job screen).
+  Future<HelpJob> getJob(String jobId) async {
+    final res = await get('/jobs/$jobId');
+    final jobJson = (res['job'] ?? res) as Map<String, dynamic>;
+    return HelpJob.fromJson(jobJson);
+  }
+
+  /// Driver marks job as completed after helper arrives.
+  Future<void> completeJob(String jobId) async {
+    await post('/jobs/$jobId/complete', {});
+  }
+
+  /// Helper fetches list of pending/accepted jobs assigned to them.
+  Future<List<Map<String, dynamic>>> getMyJobs() async {
+    final res = await get('/jobs/my-jobs');
+    final list = res['jobs'] as List? ?? <dynamic>[];
+    return list.cast<Map<String, dynamic>>();
+  }
+
+  /// Helper accepts a job offer.
+  Future<void> acceptJob(String jobId) async {
+    await post('/jobs/$jobId/accept', {});
+  }
+
+  /// Returns list of nearby mechanics within radius.
+  /// [specialization] is optional — null = all types.
+  Future<List<MechanicModel>> getNearbyMechanics({
+    required double lat,
+    required double lng,
+    String? specialization,
+  }) async {
+    final res = await get('/mechanics/nearby', query: {
+      'lat': lat.toString(),
+      'lng': lng.toString(),
+      if (specialization != null) 'specialization': specialization,
+    });
+    final list = res['mechanics'] as List? ?? <dynamic>[];
+    return list
+        .cast<Map<String, dynamic>>()
+        .map(MechanicModel.fromJson)
+        .toList();
+  }
+
+  /// Triggers SOS alert with current location.
+  /// Backend notifies emergency contacts + logs the event.
+  Future<void> triggerSos({
+    required double lat,
+    required double lng,
+  }) async {
+    await post('/sos', {'lat': lat, 'lng': lng});
+  }
+
+  /// Updates driver/helper real-time location (called periodically).
+  Future<void> updateLocation({
+    required double lat,
+    required double lng,
+  }) async {
+    await put('/auth/location', {'lat': lat, 'lng': lng});
   }
 }
